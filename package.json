@@ -1,0 +1,35 @@
+{
+  "name": "hammer-splinterlands-bot",
+  "version": "0.1.0",
+  "description": "A fast and efficient multi-account splinderlands bot based on 'ultimate-splinterlands-bot'",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Bram Hammer",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "dimas-kmeans": "^1.0.3",
+    "dotenv": "^8.2.0",
+    "hierarchical-clustering": "^1.1.0",
+    "minimist": ">=1.2.3",
+    "node-fetch": "^2.6.1",
+    "pg": "^8.0.3",
+    "puppeteer": "^10.1.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/breakerh/hammer-splinterlands-bot.git"
+  },
+  "keywords": [
+    "bot",
+    "splinterlands"
+  ],
+  "bugs": {
+    "url": "https://github.com/breakerh/hammer-splinterlands-bot/issues"
+  },
+  "homepage": "https://github.com/breakerh/hammer-splinterlands-bot#readme"
+}
