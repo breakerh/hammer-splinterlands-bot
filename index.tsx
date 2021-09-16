@@ -1,8 +1,10 @@
-//'use strict';
-require('dotenv').config()
-const puppeteer = require('puppeteer');
-const fetch = require("node-fetch");
-const chalk = require('chalk');
+import {config} from "dotenv";
+config()
+import * as puppeteer from "puppeteer";
+import fetch from "node-fetch";
+import * as chalk from "chalk";
+
+import app from "./splinterlands/index";
 
 const splinterlandsPage = require('./splinterlandsPage');
 const user = require('./user');
@@ -11,63 +13,11 @@ const helper = require('./helper');
 const quests = require('./quests');
 const ask = require('./possibleTeams');
 const api = require('./api');
-const version = 0.3;
 
-async function checkForUpdate() {
-	console.log('-----------------------------------------------------------------------------------------------------');
-	await fetch('http://jofri.pf-control.de/prgrms/splnterlnds/version.txt')
-	.then(response=>response.json())
-	.then(newestVersion=>{ 
-		if (newestVersion > version) {
-			console.log('New Update! Please download on https://github.com/PCJones/ultimate-splinterlands-bot');
-			console.log('New Update! Please download on https://github.com/PCJones/ultimate-splinterlands-bot');
-			console.log('New Update! Please download on https://github.com/PCJones/ultimate-splinterlands-bot');
-		} else {
-			console.log('No update available');
-		}
-	})
-	console.log('-----------------------------------------------------------------------------------------------------');
-}
-
-async function checkForMissingConfigs() {
-	if (!process.env.LOGIN_VIA_EMAIL) {
-		console.log("Missing LOGIN_VIA_EMAIL parameter in .env - see updated .env-example!");
-		await sleep(60000);
-	}
-	if (!process.env.HEADLESS) {
-		console.log("Missing HEADLESS parameter in .env - see updated .env-example!");
-		await sleep(60000);
-	}
-	if (!process.env.KEEP_BROWSER_OPEN) {
-		console.log("Missing KEEP_BROWSER_OPEN parameter in .env - see updated .env-example!");
-		await sleep(60000);
-	}
-	if (!process.env.CLAIM_QUEST_REWARD) {
-		console.log("Missing CLAIM_QUEST_REWARD parameter in .env - see updated .env-example!");
-		await sleep(60000);
-	}
-	if (!process.env.USE_CLASSIC_BOT_PRIVATE_API) {
-		console.log("Missing USE_CLASSIC_BOT_PRIVATE_API parameter in .env - see updated .env-example!");
-		await sleep(60000);
-	}
-	if (!process.env.USE_API) {
-		console.log("Missing USE_API parameter in .env - see updated .env-example!");
-		await sleep(60000);
-	}
-	if (!process.env.ERC_THRESHOLD) {
-		console.log("Missing ERC_THRESHOLD parameter in .env - see updated .env-example!");
-		await sleep(60000);
-	}
-	if (!process.env.RATING_MIN) {
-		console.log("Missing RATING_MIN parameter in .env - see updated .env-example!");
-		await sleep(60000);
-	}
-	if (!process.env.RATING_MAX) {
-		console.log("Missing RATING_MAX parameter in .env - see updated .env-example!");
-		await sleep(60000);
-	}
-
-}
+const APP = new app();
+APP.isReady.then(() => {
+	APP.loopAccounts();
+});
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -96,7 +46,7 @@ async function waitUntilLoaded(page) {
         console.info('No loading circle...')
 		return;
     }
-	
+
 	await page.waitForFunction(() => !document.querySelector('.loading'), { timeout: 120000 });
 }
 
@@ -107,14 +57,14 @@ async function clickMenuFightButton(page) {
     } catch (e) {
         console.info('fight button not found')
     }
-	
+
 }
 
 // LOAD MY CARDS
 async function getCards() {
     const myCards = await user.getPlayerCards(process.env.ACCUSERNAME.split('@')[0]) //split to prevent email use
     return myCards;
-} 
+}
 
 async function getQuest() {
     return quests.getPlayerQuest(process.env.ACCUSERNAME.split('@')[0])
@@ -133,10 +83,10 @@ async function createBrowsers(count, headless) {
 		await page.on('dialog', async dialog => {
 			await dialog.accept();
 		});
-		
+
 		browsers[i] = browser;
 	}
-	
+
 	return browsers;
 }
 
@@ -221,7 +171,7 @@ async function startBotPlayMatch(page, myCards, quest, claimQuestReward, priorit
             throw new Error('Login Error');
         });
     }
-	
+
 	await waitUntilLoaded(page);
 
     if(ratingThresholdMin!==0&&ratingThresholdMax!==0){
@@ -299,7 +249,7 @@ async function startBotPlayMatch(page, myCards, quest, claimQuestReward, priorit
     try {
         console.log('waiting for battle button...')
 		await selectCorrectBattleType(page);
-		
+
         await page.waitForXPath("//button[contains(., 'BATTLE')]", { timeout: 1000 })
             .then(button => {
 				console.log('Battle button clicked'); button.click()
@@ -354,18 +304,18 @@ async function startBotPlayMatch(page, myCards, quest, claimQuestReward, priorit
         myCards: myCards,
 		quest: prioritizeQuest ? quest : '',
     }
-	
-    await page.waitForTimeout(2000);   
+
+    await page.waitForTimeout(2000);
     //TEAM SELECTION
     let teamToPlay;
 	if (useAPI) {
 		const apiResponse = await api.getPossibleTeams(matchDetails);
 		if (apiResponse) {
 			console.log('API Response', apiResponse);
-		
-			teamToPlay = { summoner: Object.values(apiResponse)[1], cards: [ Object.values(apiResponse)[1], Object.values(apiResponse)[3], Object.values(apiResponse)[5], Object.values(apiResponse)[7], Object.values(apiResponse)[9], 
+
+			teamToPlay = { summoner: Object.values(apiResponse)[1], cards: [ Object.values(apiResponse)[1], Object.values(apiResponse)[3], Object.values(apiResponse)[5], Object.values(apiResponse)[7], Object.values(apiResponse)[9],
 							Object.values(apiResponse)[11], Object.values(apiResponse)[13], Object.values(apiResponse)[15] ] };
-							
+
 			console.log('api team', teamToPlay);
 			// TEMP, testing
 			if (Object.values(apiResponse)[1] == '') {
@@ -377,7 +327,7 @@ async function startBotPlayMatch(page, myCards, quest, claimQuestReward, priorit
 		else {
 			console.log('API failed, using local history with most cards used tactic');
 			const possibleTeams = await ask.possibleTeams(matchDetails).catch(e=>console.log('Error from possible team API call: ',e));
-	
+
 			if (possibleTeams && possibleTeams.length) {
 				//console.log('Possible Teams based on your cards: ', possibleTeams.length, '\n', possibleTeams);
 				console.log('Possible Teams based on your cards: ', possibleTeams.length);
@@ -461,14 +411,9 @@ async function startBotPlayMatch(page, myCards, quest, claimQuestReward, priorit
 
 }
 
-// 30 MINUTES INTERVAL BETWEEN EACH MATCH (if not specified in the .env file)
-const sleepingTimeInMinutes = process.env.MINUTES_BATTLES_INTERVAL || 30;
-const sleepingTime = sleepingTimeInMinutes * 60000;
-
 (async () => {
 	try {
-		await checkForUpdate();
-		await checkForMissingConfigs();
+
 		const loginViaEmail = JSON.parse(process.env.LOGIN_VIA_EMAIL.toLowerCase());
 		const accountusers = process.env.ACCUSERNAME.split(',');
 		const accounts = loginViaEmail ? process.env.EMAIL.split(',') : accountusers;
@@ -478,7 +423,7 @@ const sleepingTime = sleepingTimeInMinutes * 60000;
 		const keepBrowserOpen = JSON.parse(process.env.KEEP_BROWSER_OPEN.toLowerCase());
 		const claimQuestReward = JSON.parse(process.env.CLAIM_QUEST_REWARD.toLowerCase());
 		const prioritizeQuest = JSON.parse(process.env.QUEST_PRIORITY.toLowerCase());
-		
+
 		let browsers = [];
 		console.log('Headless', headless);
 		console.log('Keep Browser Open', keepBrowserOpen);
@@ -495,7 +440,7 @@ const sleepingTime = sleepingTimeInMinutes * 60000;
 				process.env['EMAIL'] = accounts[i];
 				process.env['PASSWORD'] = passwords[i];
 				process.env['ACCUSERNAME'] = accountusers[i];
-				
+
 				if (keepBrowserOpen && browsers.length == 0) {
 					console.log('Opening browsers');
 					browsers = await createBrowsers(accounts.length, headless);
@@ -503,9 +448,9 @@ const sleepingTime = sleepingTimeInMinutes * 60000;
 					console.log('Opening browser');
 					browsers = await createBrowsers(1, headless);
 				}
-							
+
 				const page = (await (keepBrowserOpen ? browsers[i] : browsers[0]).pages())[1];
-				
+
 				//page.goto('https://splinterlands.io/');
 				console.log('getting user cards collection from splinterlands API...')
 				const myCards = await getCards()
@@ -518,21 +463,21 @@ const sleepingTime = sleepingTimeInMinutes * 60000;
 				}
 				await startBotPlayMatch(page, myCards, quest, claimQuestReward, prioritizeQuest, useAPI)
 					.then(() => {
-						console.log('Closing battle', new Date().toLocaleString());        
+						console.log('Closing battle', new Date().toLocaleString());
 					})
 					.catch((e) => {
 						console.log(e)
 					})
-				
+
 				await page.waitForTimeout(5000);
 				if (keepBrowserOpen) {
-					await page.goto('about:blank');	
+					await page.goto('about:blank');
 				} else {
 					await browsers[0].close();
 				}
 			}
 			await console.log('Waiting for the next battle in', sleepingTime / 1000 / 60 , ' minutes at ', new Date(Date.now() +sleepingTime).toLocaleString() );
-			await console.log('Join the telegram group https://t.me/ultimatesplinterlandsbot and discord https://discord.gg/hwSr7KNGs9');
+			//await console.log('Join the telegram group https://t.me/ultimatesplinterlandsbot and discord https://discord.gg/hwSr7KNGs9');
 			await new Promise(r => setTimeout(r, sleepingTime));
 		}
 	} catch (e) {

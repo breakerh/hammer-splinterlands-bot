@@ -78,6 +78,8 @@ Configuration with default values:
 
 - `USE_CLASSIC_BOT_PRIVATE_API=false` Set to false unless you have the private API from the original bot
 
+- `CHECK_UPDATE=true` Set to true unless you don't want to update your application
+
 # Donations
 
 In case you want to donate to me for updating this bot, I would be very happy! Please also consider donating to the original bot creator.
