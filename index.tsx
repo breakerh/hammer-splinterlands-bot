@@ -229,7 +229,7 @@ async function startBotPlayMatch(page, myCards, quest, claimQuestReward, priorit
     console.log('Quest details: ', quest);
 	if (claimQuestReward) {
 		try {
-			await page.waitForSelector('#quest_claim_btn', { timeout: 5000 })
+			await page.waitForSelector('#quest_claim_btn', { timeout: 20000 })
 				.then(button => button.click());
 		} catch (e) {
 			console.info('no quest reward to be claimed waiting for the battle...')
@@ -302,7 +302,7 @@ async function startBotPlayMatch(page, myCards, quest, claimQuestReward, priorit
         rules: rules,
         splinters: splinters,
         myCards: myCards,
-		quest: prioritizeQuest ? quest : '',
+		quest: (prioritizeQuest && quest) ? quest : '',
     }
 
     await page.waitForTimeout(2000);
@@ -310,7 +310,7 @@ async function startBotPlayMatch(page, myCards, quest, claimQuestReward, priorit
     let teamToPlay;
 	if (useAPI) {
 		const apiResponse = await api.getPossibleTeams(matchDetails);
-		if (apiResponse) {
+		if (apiResponse && !JSON.stringify(apiResponse).includes('api limit reached')) {
 			console.log('API Response', apiResponse);
 
 			teamToPlay = { summoner: Object.values(apiResponse)[1], cards: [ Object.values(apiResponse)[1], Object.values(apiResponse)[3], Object.values(apiResponse)[5], Object.values(apiResponse)[7], Object.values(apiResponse)[9],
@@ -325,7 +325,12 @@ async function startBotPlayMatch(page, myCards, quest, claimQuestReward, priorit
 			}
 		}
 		else {
-			console.log('API failed, using local history with most cards used tactic');
+			if (apiResponse && JSON.stringify(apiResponse).includes('api limit reached')) {
+				console.log('API limit per hour reached, using local backup!');
+				console.log('Visit discord or telegram group to learn more about API limits: https://t.me/ultimatesplinterlandsbot and https://discord.gg/hwSr7KNGs9');
+			} else {
+				misc.writeToLog('API failed, using local history with most cards used tactic');
+			}
 			const possibleTeams = await ask.possibleTeams(matchDetails).catch(e=>console.log('Error from possible team API call: ',e));
 
 			if (possibleTeams && possibleTeams.length) {

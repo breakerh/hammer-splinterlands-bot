@@ -25,42 +25,48 @@ class systemCheck {
 		});
 	}
 
-	checkForMissingConfigs() {
+	static sleep(ms) {
+		return new Promise((resolve) => {
+			setTimeout(resolve, ms);
+		});
+	}
+
+	async checkForMissingConfigs() {
 		if (!process.env.LOGIN_VIA_EMAIL) {
 			console.log("Missing \x1b[30m\x1b[41mLOGIN_VIA_EMAIL\x1b[0m parameter in .env - see updated .env-example!");
-			await sleep(60000);
+			await systemCheck.sleep(60000);
 		}
 		if (!process.env.HEADLESS) {
 			console.log("Missing\x1b[30m\x1b[41mHEADLESS\x1b[0m parameter in .env - see updated .env-example!");
-			await sleep(60000);
+			await systemCheck.sleep(60000);
 		}
 		if (!process.env.KEEP_BROWSER_OPEN) {
 			console.log("Missing \x1b[30m\x1b[41mKEEP_BROWSER_OPEN\x1b[0m parameter in .env - see updated .env-example!");
-			await sleep(60000);
+			await systemCheck.sleep(60000);
 		}
 		if (!process.env.CLAIM_QUEST_REWARD) {
 			console.log("Missing \x1b[30m\x1b[41mCLAIM_QUEST_REWARD\x1b[0m parameter in .env - see updated .env-example!");
-			await sleep(60000);
+			await systemCheck.sleep(60000);
 		}
 		if (!process.env.USE_CLASSIC_BOT_PRIVATE_API) {
 			console.log("Missing \x1b[30m\x1b[41mUSE_CLASSIC_BOT_PRIVATE_API\x1b[0m parameter in .env - see updated .env-example!");
-			await sleep(60000);
+			await systemCheck.sleep(60000);
 		}
 		if (!process.env.USE_API) {
 			console.log("Missing \x1b[30m\x1b[41mUSE_API\x1b[0m parameter in .env - see updated .env-example!");
-			await sleep(60000);
+			await systemCheck.sleep(60000);
 		}
 		if (!process.env.ERC_THRESHOLD) {
 			console.log("Missing \x1b[30m\x1b[41mERC_THRESHOLD\x1b[0m parameter in .env - see updated .env-example!");
-			await sleep(60000);
+			await systemCheck.sleep(60000);
 		}
 		if (!process.env.RATING_MIN) {
 			console.log("Missing \x1b[30m\x1b[41mRATING_MIN\x1b[0m parameter in .env - see updated .env-example!");
-			await sleep(60000);
+			await systemCheck.sleep(60000);
 		}
 		if (!process.env.RATING_MAX) {
 			console.log("Missing \x1b[30m\x1b[41mRATING_MAX\x1b[0m parameter in .env - see updated .env-example!");
-			await sleep(60000);
+			await systemCheck.sleep(60000);
 		}
 	}
 

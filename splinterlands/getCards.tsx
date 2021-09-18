@@ -2,6 +2,9 @@ class GetCards {
 	// @ts-ignore
 	public cardsReady: Promise.IThenable<any>;
 	private cards: object[];
+	public makeCardId = (id) => id;
+	public validDecks = ['Red', 'Blue', 'White', 'Black', 'Green'];
+	public colorToDeck = { 'Red': 'Fire', 'Blue': 'Water', 'White': 'Life', 'Black': 'Death', 'Green': 'Earth' };
 
 	constructor() {
 		this.cardsReady = new Promise((resolve, reject) => {
@@ -38,12 +41,30 @@ class GetCards {
 		});
 	}
 
+	async deckValidColor(accumulator, currentValue) {
+		const color = await this.color(currentValue);
+		return this.validDecks.includes(color) ? this.colorToDeck[color] : accumulator
+	}
+
+	async teamActualSplinterToPlay(teamIdsArray){
+		return teamIdsArray.reduce(this.deckValidColor, '');
+	}
+
 	async getAllCards() {
 		return this.cards.map((y) => ({
 			'id': y["id"],
 			'name': y["name"],
 			'color': y["color"]})
 		)
+	}
+
+	async color(id){
+		const card = this.cards.find(o => parseInt(o["id"]) === parseInt(id));
+		return card && card["color"] ? card["color"] : '';
+	}
+
+	async getAllCardsDetails() {
+		return this.cards
 	}
 
 	async getCardById(ids: any[] = []) {

@@ -37,7 +37,7 @@ class GetQuest {
 			.then(x => x && x.json())
 			.then(x => {
 				if (x[0])
-					return {name: x[0].name, splinter: getQuestSplinter(x[0].name), total: x[0].total_items, completed: x[0].completed_items};
+					return {name: x[0].name, splinter: this.getQuestSplinter(x[0].name), total: x[0].total_items, completed: x[0].completed_items};
 				})
 			.catch(e => console.log('[ERROR QUEST] Check if Splinterlands is down. Are you using username or email? please use username'))
 	)
