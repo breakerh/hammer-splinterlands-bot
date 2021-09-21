@@ -13,7 +13,7 @@ Feel free to give suggestions for features/code refurbishing via github as an is
 - Multiple accounts with only one instance  
   _**Note**: we support this function however don't recommend it since we aren't sure of possible blocks from splinterlands._
 - Login via Email (preferred)
-- Better Team Selection - the bot will chose cards with best win rate, not the ones that are most used
+- Better Team Selection - the bot will choose cards with best win rate, not the ones that are most used
 - Faster Login & Fighting: _Still needs a lot of tweaking imho_
     - The bot no longer refreshes the page all the time (which often got you blocked from splinterlands for a few minutes)
     - The bot clicks away popups
@@ -37,10 +37,16 @@ https://github.com/breakerh/hammer-splinterlands-bot/issues)
 - Create .env file (see .env-example)
 - On windows: Execute `install.bat` in bot folder
 - On MacOS/Linux: open terminal in bot folder and execute command `npm install`
+- Run `node battleGetData.js`
+- Navigate to `/data` and run `node combine.js`
 
 ## How to start the bot
 - On windows: Execute `start.bat` in bot folder
 - On MacOS/Linux: open terminal in bot folder and execute command `npm start`
+
+## Updated the tool from 1.3 or prior?
+- Run `node battleGetData.js`
+- Navigate to `/data` and run `node combine.js`
 
 ## Bot configuration:
 
