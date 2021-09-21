@@ -87,7 +87,9 @@ class app {
 						console.log(process.env.EMAIL, ' playing only basic cards')
 				}
 
-				await bot.prepare(page);
+				let prepare = await bot.prepare(page);
+				if(!prepare)
+					return false;
 				let check = await bot.checkThreshold(page);
 				if(!check)
 					return false;

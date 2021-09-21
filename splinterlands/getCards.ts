@@ -49,7 +49,7 @@ class GetCards {
 	}
 
 	async teamActualSplinterToPlay(teamIdsArray){
-		return teamIdsArray.reduce(this.deckValidColor, '');
+		return await teamIdsArray.reduce(await this.deckValidColor, '');
 	}
 
 	async getAllCards() {

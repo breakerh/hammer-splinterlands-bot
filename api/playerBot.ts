@@ -60,6 +60,11 @@ class playerBot {
 			timeout: 15000
 		}).then(res => res)
 			.catch(()=> console.log('Already logged in'))*/
+		let maintenance = await page.waitForSelector('.maintenance',{ timeout:2000 }).then(e => true).catch(err => false);
+		if(maintenance) {
+			console.log(chalk.yellowBright('[MAINTENANCE MODE] ')+chalk.redBright('Splinterlands is in maintenance!'));
+			return false;
+		}
 		let username = await this.getElementText(page, '.dropdown-toggle .bio__name__display', 10000);
 
 		if (username == process.env.ACCUSERNAME) {
@@ -75,12 +80,13 @@ class playerBot {
 
 			let item = await page.waitForSelector('#log_in_button > button', {
 				visible: true,
-				timeout: 15000
+				timeout: 5000
 			}).then(res => res)
 				.catch(()=> console.log('Login verified'))
 		}
 
 		await this.waitUntilLoaded(page);
+		return true;
 	}
 
 	async waitUntilLoaded(page) {
@@ -443,13 +449,13 @@ class playerBot {
 		const teamToPlay = await this.buildTeam(matchDetails,quest);
 
 		if (teamToPlay)
-			await page.waitForXPath(`//button[@class="btn btn--create-team"]`, { timeout: 10000 }).then(teamButton => teamButton.click());
+			await page.waitForXPath(`//button[@class="btn btn--create-team"]`, { timeout: 10000 }).then(teamButton => {console.log('click');teamButton.click()});
 		else
 			throw new Error('Team Selection error');
 
 		await page.waitForTimeout(10000);
 		try {
-			await this.battle(page,teamToPlay,allCards,useAPI)
+			await this.battle(page,teamToPlay,allCards,this.useAPI)
 		} catch (e) {
 			let htmloutput = await page.content();
 			fs.writeFile(`./pagerror.html`, htmloutput, function (err) {
@@ -460,7 +466,7 @@ class playerBot {
 			console.log('No cards to select! Waiting 5 seconds')
 			await page.waitForTimeout(5000);
 			try {
-				await this.battle(page,teamToPlay,allCards,useAPI)
+				await this.battle(page,teamToPlay,allCards,this.useAPI)
 			} catch (e) {
 				let htmloutput = await page.content();
 				fs.writeFile(`./pagerror2.html`, htmloutput, function (err) {
@@ -478,17 +484,22 @@ class playerBot {
 
 	async battle(page, teamToPlay, allCards, useAPI) {
 		await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.summoner}"]`, { timeout: 10000 }).then(summonerButton => summonerButton.click());
-		if (allCards.color(teamToPlay.cards[0]) === 'Gold') {
-			console.log('Dragon play TEAMCOLOR', allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6)))
-			await page.waitForXPath(`//div[@data-original-title="${allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6))}"]`, { timeout: 8000 })
+		if (await allCards.color(teamToPlay.cards[0]) === 'Gold') {
+			let tasplinter = await allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6));
+			console.log('Dragon play TEAMCOLOR', tasplinter)
+			await page.waitForXPath(`//div[@data-original-title="${tasplinter}"]`, { timeout: 8000 })
 				.then(selector => selector.click())
 		}
 		await page.waitForTimeout(5000);
 		for (let i = 1; i <= 6; i++) {
 			console.log('play: ', teamToPlay.cards[i].toString())
-			await teamToPlay.cards[i] ? page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, { timeout: 10000 })
-				.then(selector => selector.click()) : console.log('nocard ', i);
-			await page.waitForTimeout(1000);
+			if(teamToPlay.cards[i]) {
+				await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, {timeout: 10000})
+					.then(selector => selector.click()).catch(e=>console.error('[ERROR] can\'t find card!'))
+			}else{
+				console.log('nocard ', i);
+			}
+			await page.waitForTimeout(10000);
 		}
 
 		await page.waitForTimeout(5000);

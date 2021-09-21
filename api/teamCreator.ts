@@ -115,7 +115,7 @@ class teamCreator {
 		return comparison;
 	}
 
-	private cardsIdsforSelectedBattles = async (mana, ruleset, splinters, summoners) => await this.battlesFilterByManacap(mana, ruleset, summoners)
+	private cardsIdsforSelectedBattles = (mana, ruleset, splinters, summoners) => this.battlesFilterByManacap(mana, ruleset, summoners)
 		.then(x => x.map(
 				(x) => {
 					return [
@@ -143,8 +143,7 @@ class teamCreator {
 		return await this.cardsIdsforSelectedBattles(matchDetails.mana, matchDetails.rules, matchDetails.splinters, mySummoners)
 			.then(x => x.filter(
 					x => this.availabilityCheck(cards, x))
-					.map(element => element)//cards.cardByIds(element)
-			)
+					.map(element => element))
 	}
 
 	async possibleTeam(matchDetails) {
