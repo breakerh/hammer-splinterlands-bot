@@ -443,64 +443,84 @@ class playerBot {
 		const teamToPlay = await this.buildTeam(matchDetails,quest);
 
 		if (teamToPlay)
-			page.click('.btn--create-team')[0];
+			await page.waitForXPath(`//button[@class="btn btn--create-team"]`, { timeout: 10000 }).then(teamButton => teamButton.click());
 		else
 			throw new Error('Team Selection error');
 
-		await page.waitForTimeout(5000);
+		await page.waitForTimeout(10000);
 		try {
-			await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.summoner}"]`, { timeout: 10000 }).then(summonerButton => summonerButton.click());
-			if (allCards.color(teamToPlay.cards[0]) === 'Gold') {
-				console.log('Dragon play TEAMCOLOR', allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6)))
-				await page.waitForXPath(`//div[@data-original-title="${allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6))}"]`, { timeout: 8000 })
-					.then(selector => selector.click())
-			}
-			await page.waitForTimeout(5000);
-			for (let i = 1; i <= 6; i++) {
-				console.log('play: ', teamToPlay.cards[i].toString())
-				await teamToPlay.cards[i] ? page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, { timeout: 10000 })
-					.then(selector => selector.click()) : console.log('nocard ', i);
-				await page.waitForTimeout(1000);
-			}
-
-			await page.waitForTimeout(5000);
-			try {
-				await page.click('.btn-green')[0]; //start fight
-			} catch {
-				console.log('Start Fight didnt work, waiting 5 sec and retry');
-				await page.waitForTimeout(5000);
-				await page.click('.btn-green')[0]; //start fight
-			}
-			await page.waitForTimeout(5000);
-			await page.waitForSelector('#btnRumble', { timeout: 90000 }).then(()=>console.log('btnRumble visible')).catch(()=>console.log('btnRumble not visible'));
-			await page.waitForTimeout(5000);
-			await page.$eval('#btnRumble', elem => elem.click()).then(()=>console.log('btnRumble clicked')).catch(()=>console.log('btnRumble didnt click')); //start rumble
-			await page.waitForSelector('#btnSkip', { timeout: 10000 }).then(()=>console.log('btnSkip visible')).catch(()=>console.log('btnSkip not visible'));
-			await page.$eval('#btnSkip', elem => elem.click()).then(()=>console.log('btnSkip clicked')).catch(()=>console.log('btnSkip not visible')); //skip rumble
-			try {
-				const winner = await this.getElementText(page, 'section.player.winner .bio__name__display', 15000);
-				if (winner.trim() == process.env.ACCUSERNAME.trim()) {
-					const decWon = await this.getElementText(page, '.player.winner span.dec-reward span', 1000);
-					console.log(chalk.green('You won! Reward: ' + decWon + ' DEC'));
-				}
-				else {
-					console.log(chalk.red('You lost :('));
-					if (useAPI)
-						this.api.reportLoss(winner);
-				}
-			} catch(e) {
-				console.log(e);
-				console.log('Could not find winner - draw?');
-			}
-			await this.clickOnElement(page, '.btn--done', 1000, 2500);
+			await this.battle(page,teamToPlay,allCards,useAPI)
 		} catch (e) {
-			fs.writeFile(`./pagerror.html`, page.html, function (err) {
+			let htmloutput = await page.content();
+			fs.writeFile(`./pagerror.html`, htmloutput, function (err) {
 				if (err) {
 					console.log(err);
 				}
 			});
-			throw new Error(e);
+			console.log('No cards to select! Waiting 5 seconds')
+			await page.waitForTimeout(5000);
+			try {
+				await this.battle(page,teamToPlay,allCards,useAPI)
+			} catch (e) {
+				let htmloutput = await page.content();
+				fs.writeFile(`./pagerror2.html`, htmloutput, function (err) {
+					if (err) {
+						console.log(err);
+					}
+				});
+				//console.log('No cards to select! Waiting 5 seconds')
+				//await page.waitForTimeout(5000);
+				throw new Error(e);
+			}
+			//throw new Error(e);
 		}
+	}
+
+	async battle(page, teamToPlay, allCards, useAPI) {
+		await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.summoner}"]`, { timeout: 10000 }).then(summonerButton => summonerButton.click());
+		if (allCards.color(teamToPlay.cards[0]) === 'Gold') {
+			console.log('Dragon play TEAMCOLOR', allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6)))
+			await page.waitForXPath(`//div[@data-original-title="${allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6))}"]`, { timeout: 8000 })
+				.then(selector => selector.click())
+		}
+		await page.waitForTimeout(5000);
+		for (let i = 1; i <= 6; i++) {
+			console.log('play: ', teamToPlay.cards[i].toString())
+			await teamToPlay.cards[i] ? page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, { timeout: 10000 })
+				.then(selector => selector.click()) : console.log('nocard ', i);
+			await page.waitForTimeout(1000);
+		}
+
+		await page.waitForTimeout(5000);
+		try {
+			await page.click('.btn-green')[0]; //start fight
+		} catch {
+			console.log('Start Fight didnt work, waiting 5 sec and retry');
+			await page.waitForTimeout(5000);
+			await page.click('.btn-green')[0]; //start fight
+		}
+		await page.waitForTimeout(5000);
+		await page.waitForSelector('#btnRumble', { timeout: 90000 }).then(()=>console.log('btnRumble visible')).catch(()=>console.log('btnRumble not visible'));
+		await page.waitForTimeout(5000);
+		await page.$eval('#btnRumble', elem => elem.click()).then(()=>console.log('btnRumble clicked')).catch(()=>console.log('btnRumble didnt click')); //start rumble
+		await page.waitForSelector('#btnSkip', { timeout: 10000 }).then(()=>console.log('btnSkip visible')).catch(()=>console.log('btnSkip not visible'));
+		await page.$eval('#btnSkip', elem => elem.click()).then(()=>console.log('btnSkip clicked')).catch(()=>console.log('btnSkip not visible')); //skip rumble
+		try {
+			const winner = await this.getElementText(page, 'section.player.winner .bio__name__display', 15000);
+			if (winner.trim() == process.env.ACCUSERNAME.trim()) {
+				const decWon = await this.getElementText(page, '.player.winner span.dec-reward span', 1000);
+				console.log(chalk.green('You won! Reward: ' + decWon + ' DEC'));
+			}
+			else {
+				console.log(chalk.red('You lost :('));
+				if (useAPI)
+					this.api.reportLoss(winner);
+			}
+		} catch(e) {
+			console.log(e);
+			console.log('Could not find winner - draw?');
+		}
+		await this.clickOnElement(page, '.btn--done', 1000, 2500);
 	}
 }
 
