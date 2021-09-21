@@ -1,11 +1,11 @@
 {
   "name": "hammer-splinterlands-bot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A fast and efficient multi-account splinderlands bot based on 'ultimate-splinterlands-bot'",
-  "main": "index.js",
+  "main": "index.tsx",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.tsx"
+    "start": "node-ts index.tsx"
   },
   "author": "Bram Hammer",
   "license": "GPL-3.0",
@@ -17,7 +17,9 @@
     "minimist": ">=1.2.3",
     "node-fetch": "^2.6.1",
     "pg": "^8.0.3",
-    "puppeteer": "^10.1.0"
+    "puppeteer": "^10.1.0",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3"
   },
   "devDependencies": {},
   "repository": {
