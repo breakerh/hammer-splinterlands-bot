@@ -71,7 +71,7 @@ class app {
 				if (systemCheck.isDebug())
 					console.log('getting user cards collection from splinterlands API...')
 				const myCards = await allCards.cardsReady
-					.then(() => allCards.getAllCardIds())
+					.then(() => allCards.getPlayerCards(process.env['ACCUSERNAME']))
 					.catch(() => console.log('cards collection api didnt respond. Did you use username? avoid email!'));
 				if (systemCheck.isDebug())
 					console.log('getting user quest info from splinterlands API...');

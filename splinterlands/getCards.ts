@@ -7,6 +7,7 @@ class GetCards {
 	public makeCardId = (id) => id;
 	public validDecks = ['Red', 'Blue', 'White', 'Black', 'Green'];
 	public colorToDeck = { 'Red': 'Fire', 'Blue': 'Water', 'White': 'Life', 'Black': 'Death', 'Green': 'Earth' };
+	readonly basicCards = require('../data/basicCards.js');
 
 	constructor() {
 		this.cardsReady = new Promise((resolve, reject) => {
@@ -58,6 +59,25 @@ class GetCards {
 			'name': y["name"],
 			'color': y["color"]})
 		)
+	}
+
+	async getPlayerCards(username) {
+		return await fetch(`https://game-api.splinterlands.io/cards/collection/${username}`,
+			{
+				"credentials": "omit",
+				"headers": {
+					"accept": "application/json, text/javascript, */*; q=0.01"
+				},
+				"referrer": `https://splinterlands.com/?p=collection&a=${username}`,
+				"referrerPolicy": "no-referrer-when-downgrade",
+				"body": null,
+				"method": "GET",
+				"mode": "cors"
+			})
+			.then(x => x && x.json())
+			.then(x => x['cards'] ? x['cards'].filter(x=>x.delegated_to === null || x.delegated_to === username).map(card => card.card_detail_id) : '')
+			.then(advanced => this.basicCards.concat(advanced))
+			.catch(e => {console.log('Using only basic cards due to error when getting user collection from splinterlands: ',e); return this.basicCards})
 	}
 
 	async getAllCardIds() {
