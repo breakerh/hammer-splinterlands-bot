@@ -45,7 +45,7 @@ class GetCards {
 
 	async deckValidColor(accumulator, currentValue) {
 		const color = await this.color(currentValue);
-		return this.validDecks.includes(color) ? this.colorToDeck[color] : accumulator
+		return await this.validDecks.includes(color) ? this.colorToDeck[color] : accumulator
 	}
 
 	async teamActualSplinterToPlay(teamIdsArray){
@@ -65,8 +65,8 @@ class GetCards {
 	}
 
 	async color(id){
-		const card = this.cards.find(o => parseInt(o["id"]) === parseInt(id));
-		return card && card["color"] ? card["color"] : '';
+		const card = await this.cards.find(o => parseInt(o["id"]) === parseInt(id));
+		return await card && card["color"] ? card["color"] : '';
 	}
 
 	async getAllCardsDetails() {

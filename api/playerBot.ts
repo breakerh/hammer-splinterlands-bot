@@ -517,7 +517,7 @@ class playerBot {
 		await page.waitForSelector('#btnSkip', { timeout: 10000 }).then(()=>console.log('btnSkip visible')).catch(()=>console.log('btnSkip not visible'));
 		await page.$eval('#btnSkip', elem => elem.click()).then(()=>console.log('btnSkip clicked')).catch(()=>console.log('btnSkip not visible')); //skip rumble
 		try {
-			const winner = await this.getElementText(page, 'section.player.winner .bio__name__display', 15000);
+			const winner = await this.getElementText(page, '.player.winner .bio__name__display', 15000);
 			if (winner.trim() == process.env.ACCUSERNAME.trim()) {
 				const decWon = await this.getElementText(page, '.player.winner span.dec-reward span', 1000);
 				console.log(chalk.green('You won! Reward: ' + decWon + ' DEC'));
