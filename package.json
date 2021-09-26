@@ -5,7 +5,7 @@
   "main": "index.tsx",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node-ts index.tsx"
+    "start": "ts-node index.tsx"
   },
   "author": "Bram Hammer",
   "license": "GPL-3.0",
