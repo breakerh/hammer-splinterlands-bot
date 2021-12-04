@@ -1,12 +1,15 @@
 import {config} from "dotenv";
 config();
 
+import http from 'http';
+
 import fetch from "node-fetch";
+import fs from "fs";
 import systemCheck from '../api/systemCheck';
 import GetCards from "./getCards";
 import GetQuest from "./getQuest";
 import playerBot from "../api/playerBot";
-
+import loki from 'lokijs';
 class app {
 	readonly checkUpdate: boolean = JSON.parse(process.env.CHECK_UPDATES.toLowerCase());
 	readonly loginViaEmail: boolean = JSON.parse(process.env.LOGIN_VIA_EMAIL.toLowerCase());
@@ -21,11 +24,33 @@ class app {
 	readonly prioritizeQuest: boolean = JSON.parse(process.env.QUEST_PRIORITY.toLowerCase());
 	readonly sleepingTime: number = (parseInt(process.env.MINUTES_BATTLES_INTERVAL) || 30) * 60000;
 	private browsers: any = []; // ?Browser[]
+	private database;
 
 	// @ts-ignore
 	public isReady: Promise.IThenable<any>;
 
 	constructor() {
+		const hostname = '127.0.0.1';
+		const port = 3000;
+
+		const server = http.createServer((req, res) => {
+			res.writeHead(200, {
+				'Content-Type': 'text/html'
+			});
+			fs.readFile('./templates/base.html', null, function (error, data) {
+				if (error) {
+					res.writeHead(404);
+					res.write('Whoops! File not found!');
+				} else {
+					res.write(data);
+				}
+				res.end();
+			});
+		});
+
+		server.listen(port, hostname, () => {
+			console.log(`Server running at http://${hostname}:${port}/`);
+		});
 		this.isReady = new Promise((resolve, reject) => {
 			try{
 				let checks = new systemCheck();
@@ -43,6 +68,7 @@ class app {
 					console.log('Loaded', this.accounts.length, ' Accounts')
 					console.log('START ', this.accounts, new Date().toLocaleString())
 				}
+				this.database = new loki("gamedata.db");
 				resolve(undefined)
 			}catch (err) {
 				reject(err)
@@ -51,6 +77,7 @@ class app {
 	}
 
 	async loopAccounts() {
+
 		while (true) {
 			for (let i = 0; i < this.accounts.length; i++) {
 				process.env['EMAIL'] = this.accounts[i];

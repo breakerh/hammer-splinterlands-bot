@@ -14,6 +14,7 @@
     "dimas-kmeans": "^1.0.3",
     "dotenv": "^8.2.0",
     "hierarchical-clustering": "^1.1.0",
+    "lokijs": "^1.5.12",
     "minimist": ">=1.2.3",
     "node-fetch": "^2.6.1",
     "pg": "^8.0.3",
