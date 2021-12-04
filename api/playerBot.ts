@@ -455,7 +455,7 @@ class playerBot {
 
 		await page.waitForTimeout(10000);
 		try {
-			await this.battle(page,teamToPlay,allCards,this.useAPI)
+			await this.battle(page,teamToPlay,allCards,matchDetails)
 		} catch (e) {
 			let htmloutput = await page.content();
 			fs.writeFile(`./pagerror.html`, htmloutput, function (err) {
@@ -482,7 +482,7 @@ class playerBot {
 		}
 	}
 
-	async battle(page, teamToPlay, allCards, useAPI) {
+	async battle(page, teamToPlay, allCards, matchDetails) {
 		await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.summoner}"]`, { timeout: 10000 }).then(summonerButton => summonerButton.click());
 		if (await allCards.color(teamToPlay.cards[0]) === 'Gold') {
 			let tasplinter = await allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6));
@@ -502,7 +502,7 @@ class playerBot {
 			await page.waitForTimeout(3000);
 		}
 
-		await page.waitForTimeout(5000);
+		await page.waitForTimeout(2000);
 		try {
 			await page.click('.btn-green')[0]; //start fight
 		} catch {
@@ -521,11 +521,13 @@ class playerBot {
 			if (winner.trim() == process.env.ACCUSERNAME.trim()) {
 				const decWon = await this.getElementText(page, '.player.winner span.dec-reward span', 1000);
 				console.log(chalk.green('You won! Reward: ' + decWon + ' DEC'));
+				this.teamCreator.reportWin(process.env.ACCUSERNAME.trim());
 			}
 			else {
 				console.log(chalk.red('You lost :('));
-				if (useAPI)
-					this.api.reportLoss(winner);
+				this.teamCreator.reportLoss(process.env.ACCUSERNAME.trim());
+				/*if (useAPI)
+					this.api.reportLoss(winner);*/
 			}
 		} catch(e) {
 			console.log(e);

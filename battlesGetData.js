@@ -105,7 +105,6 @@ expandUserList(_usersToGrab).then(newusers => {
                                 player_rating_initial: battle.player_1_rating_initial,
                                 player_rating_final: battle.player_1_rating_final,
                                 winner: battle.player_1,
-
                             }
                         } else if (battle.winner && battle.winner == battle.player_2) {
                             const monstersDetails = extractMonster(details.team2)

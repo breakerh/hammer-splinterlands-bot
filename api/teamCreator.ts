@@ -1,10 +1,11 @@
 import fetch from "node-fetch";
 import GetCards from "../splinterlands/getCards";
 import {config} from "dotenv";
+import fs from "fs";
 config();
 
 class teamCreator {
-	readonly historyFallback = require("../data/newHistory.json");
+	historyFallback = require("../data/newHistory.json");
 	readonly basicCards = require('../data/basicCards.js');
 	readonly summoners = [{ 224: 'dragon' },
 		{ 27: 'earth' },
@@ -46,6 +47,7 @@ class teamCreator {
 		{ 278: 'earth' },
 		{ 73: 'life' }]
 	readonly splinters = ['fire', 'life', 'earth', 'water', 'death', 'dragon']
+	private chosenTeam = null;
 	private getCards = new GetCards();
 
 	constructor() {
@@ -336,7 +338,8 @@ class teamCreator {
 				const res = await this.mostWinningSummonerTankCombo(filteredTeams, matchDetails);
 				console.log('Play this for the quest:', res)
 				if (res[0] && res[1]) {
-					return { summoner: res[0], cards: res[1] };
+					this.chosenTeam = { summoner: res[0], cards: res[1] };
+					return this.chosenTeam;
 				}
 			}
 		}
@@ -345,7 +348,8 @@ class teamCreator {
 		const res = await this.mostWinningSummonerTankCombo(possibleTeams, matchDetails);
 		console.log('Dont play for the quest, and play this:', res)
 		if (res[0] && res[1]) {
-			return { summoner: res[0], cards: res[1] };
+			this.chosenTeam =  { summoner: res[0], cards: res[1] };
+			return this.chosenTeam;
 		}
 
 		let i = 0;
@@ -354,11 +358,106 @@ class teamCreator {
 			if (matchDetails.splinters.includes(possibleTeams[i][7]) && check !== '' && matchDetails.splinters.includes(check.toLowerCase())) {
 				console.log('Less than 25 teams available. SELECTED: ', possibleTeams[i]);
 				const summoner = this.getCards.makeCardId(possibleTeams[i][0].toString());
-				return { summoner: summoner, cards: possibleTeams[i] };
+				this.chosenTeam = { summoner: summoner, cards: possibleTeams[i] };
+				return this.chosenTeam;
 			}
 			console.log('DISCARDED: ', possibleTeams[i])
 		}
 		throw new Error('NO TEAM available to be played.');
+	}
+
+	async getLastBattle(player = '', data = {}) {
+		const battleHistory = await fetch('https://game-api.splinterlands.io/battle/history?player=' + player)
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				return response;
+			})
+			.then((battleHistory) => {
+				return battleHistory.json();
+			})
+			.catch((error) => {
+				console.error('There has been a problem with your fetch operation:', error);
+			});
+		return battleHistory.battles[0];
+	}
+
+	extractMonster = (team) => {
+		const monster1 = team.monsters[0];
+		const monster2 = team.monsters[1];
+		const monster3 = team.monsters[2];
+		const monster4 = team.monsters[3];
+		const monster5 = team.monsters[4];
+		const monster6 = team.monsters[5];
+
+		return {
+			summoner_id: team.summoner.card_detail_id,
+			summoner_level: team.summoner.level,
+			monster_1_id: monster1 ? monster1.card_detail_id : '',
+			monster_1_level: monster1 ? monster1.level : '',
+			monster_1_abilities: monster1 ? monster1.abilities : '',
+			monster_2_id: monster2 ? monster2.card_detail_id : '',
+			monster_2_level: monster2 ? monster2.level : '',
+			monster_2_abilities: monster2 ? monster2.abilities : '',
+			monster_3_id: monster3 ? monster3.card_detail_id : '',
+			monster_3_level: monster3 ? monster3.level : '',
+			monster_3_abilities: monster3 ? monster3.abilities : '',
+			monster_4_id: monster4 ? monster4.card_detail_id : '',
+			monster_4_level: monster4 ? monster4.level : '',
+			monster_4_abilities: monster4 ? monster4.abilities : '',
+			monster_5_id: monster5 ? monster5.card_detail_id : '',
+			monster_5_level: monster5 ? monster5.level : '',
+			monster_5_abilities: monster5 ? monster5.abilities : '',
+			monster_6_id: monster6 ? monster6.card_detail_id : '',
+			monster_6_level: monster6 ? monster6.level : '',
+			monster_6_abilities: monster6 ? monster6.abilities : ''
+		}
+	}
+
+	extractGeneralInfo = (x) => {
+		return {
+			created_date: x.created_date ? x.created_date : '',
+			match_type: x.match_type ? x.match_type : '',
+			mana_cap: x.mana_cap ? x.mana_cap : '',
+			ruleset: x.ruleset ? x.ruleset : '',
+			inactive: x.inactive ? x.inactive : ''
+		}
+	}
+
+	reportWin(username) {
+		this.getLastBattle(username).then(lastBattle => {
+			const details = JSON.parse(lastBattle.details);
+			const monstersDetails = this.extractMonster(details.team1)
+			const info = this.extractGeneralInfo(lastBattle)
+			this.historyFallback.push({
+				...monstersDetails,
+				...info,
+				battle_queue_id: lastBattle.battle_queue_id_1,
+				player_rating_initial: lastBattle.player_1_rating_initial,
+				player_rating_final: lastBattle.player_1_rating_final,
+				winner: username==lastBattle.player_1?lastBattle.player_1:lastBattle.player_2,
+			});
+			fs.writeFile(__dirname.replace('api','data/newHistory.json'), JSON.stringify(this.historyFallback), err => {});
+		});
+		//this.historyFallback = require("../data/newHistory.json");
+	}
+
+	reportLoss(username) {
+		this.getLastBattle(username).then(lastBattle => {
+			const details = JSON.parse(lastBattle.details);
+			const monstersDetails = this.extractMonster(details.team1)
+			const info = this.extractGeneralInfo(lastBattle)
+			this.historyFallback.push({
+				...monstersDetails,
+				...info,
+				battle_queue_id: lastBattle.battle_queue_id_2,
+				player_rating_initial: lastBattle.player_2_rating_initial,
+				player_rating_final: lastBattle.player_2_rating_final,
+				winner: username!=lastBattle.player_1?lastBattle.player_1:lastBattle.player_2,
+			});
+			fs.writeFile(__dirname.replace('api','data/newHistory.json'), JSON.stringify(this.historyFallback), err => {});
+		});
 	}
 }
 
