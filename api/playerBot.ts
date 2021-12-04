@@ -499,7 +499,7 @@ class playerBot {
 			}else{
 				console.log('nocard ', i);
 			}
-			await page.waitForTimeout(10000);
+			await page.waitForTimeout(3000);
 		}
 
 		await page.waitForTimeout(5000);
