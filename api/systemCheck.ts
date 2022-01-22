@@ -6,16 +6,16 @@ config();
 class systemCheck {
 	// @ts-ignore
 	public versionChecked: Promise.IThenable<any>;
-	readonly version: number = 0.6;
+	readonly version: number = 0.5;
 
 	constructor() {
 
 	}
 
-	checkVersion() {
-		this.versionChecked = new Promise((resolve, reject) => {
+	async checkVersion() {
+
 			console.log('-----------------------------------------------------------------------------------------------------');
-			fetch('https://raw.githubusercontent.com/breakerh/hammer-splinterlands-bot/main/version.json')
+			await fetch('https://raw.githubusercontent.com/breakerh/hammer-splinterlands-bot/main/version.json')
 				.then(response=>response.json())
 				.then(versionData=>{
 					if (versionData.version > this.version) {
@@ -23,11 +23,9 @@ class systemCheck {
 					} else {
 						console.log('No update available');
 					}
-					resolve(undefined);
 				})
-				.catch(err => reject(err));
+				.catch(err => console.log('Repository could\'t be reached.'));
 			console.log('-----------------------------------------------------------------------------------------------------');
-		});
 	}
 
 	static sleep(ms) {

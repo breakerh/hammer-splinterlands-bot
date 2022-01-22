@@ -32,8 +32,6 @@ class app {
 				let checks = new systemCheck();
 
 				checks.checkForMissingConfigs();
-				if (this.checkUpdate)
-					checks.checkVersion();
 				if (systemCheck.isDebug()) {
 					console.log('Headless', this.headless);
 					console.log('Keep Browser Open', this.keepBrowserOpen);
@@ -44,6 +42,7 @@ class app {
 					console.log('START ', this.accounts, new Date().toLocaleString())
 				}
 				resolve(undefined)
+
 			}catch (err) {
 				reject(err)
 			}
@@ -153,6 +152,13 @@ class app {
 	randBetween(min, max) {
 		let delta = max - min;
 		return Math.round(min + Math.random() * delta);
+	}
+
+	async versionCheck() {
+		const checks = new systemCheck();
+		if (this.checkUpdate) {
+			await checks.checkVersion();
+		}
 	}
 }
 export default app
