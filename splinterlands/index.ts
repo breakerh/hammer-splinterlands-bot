@@ -1,13 +1,15 @@
 import {config} from "dotenv";
 config();
 
-import fetch from "node-fetch";
+
 import systemCheck from '../api/systemCheck';
 import GetCards from "./getCards";
 import GetQuest from "./getQuest";
 import playerBot from "../api/playerBot";
 
 class app {
+	public wins: number = 0;
+	public losses: number = 0;
 	readonly checkUpdate: boolean = JSON.parse(process.env.CHECK_UPDATES.toLowerCase());
 	readonly loginViaEmail: boolean = JSON.parse(process.env.LOGIN_VIA_EMAIL.toLowerCase());
 	readonly accountusers: string[] = process.env.ACCUSERNAME.split(',');
@@ -51,6 +53,15 @@ class app {
 	}
 
 	async loopAccounts() {
+
+		/*const allCards = new GetCards();
+		await allCards.cardsReady
+			.then(async cards => {
+
+				let test = allCards.teamActualSplinterToPlay([162,160,163,158]);
+				console.log(test);
+			});
+		return;*/
 		while (true) {
 			for (let i = 0; i < this.accounts.length; i++) {
 				process.env['EMAIL'] = this.accounts[i];
@@ -71,7 +82,7 @@ class app {
 				if (systemCheck.isDebug())
 					console.log('getting user cards collection from splinterlands API...')
 				const myCards = await allCards.cardsReady
-					.then(() => allCards.getAllCardIds())
+					.then(() => allCards.getPlayerCards(process.env['ACCUSERNAME']))
 					.catch(() => console.log('cards collection api didnt respond. Did you use username? avoid email!'));
 				if (systemCheck.isDebug())
 					console.log('getting user quest info from splinterlands API...');
@@ -87,7 +98,9 @@ class app {
 						console.log(process.env.EMAIL, ' playing only basic cards')
 				}
 
-				await bot.prepare(page);
+				let prepare = await bot.prepare(page);
+				if(!prepare)
+					return false;
 				let check = await bot.checkThreshold(page);
 				if(!check)
 					return false;
@@ -113,7 +126,11 @@ class app {
 				}
 
 				await bot.launchBattle(page, myCards, quest, this.claimQuestReward, this.prioritizeQuest, this.useAPI, allCards)
-					.then(() => {
+					.then((outcome) => {
+						if(outcome)
+							this.wins++;
+						else
+							this.losses++;
 						console.log('Closing battle', new Date().toLocaleString());
 					})
 					.catch((e) => {
@@ -127,10 +144,17 @@ class app {
 					await this.browsers[0].close();
 				}
 			}
-			await console.log('Waiting for the next battle in', this.sleepingTime / 1000 / 60, ' minutes at ', new Date(Date.now() + this.sleepingTime).toLocaleString());
-			await console.log('Want to speed things up? or just support me? https://bunq.me/bramhammer');
-			await new Promise(r => setTimeout(r, this.sleepingTime));
+			const sleepingTime = this.randBetween(this.sleepingTime*.8,this.sleepingTime*1.2);
+			console.log('Waiting for the next battle in', (sleepingTime / 1000 / 60).toFixed(2), ' minutes at ', new Date(Date.now() + sleepingTime).toLocaleString());
+			console.log('Want to speed things up? or just support me? https://bunq.me/bramhammer');
+			console.log('This session you have '+this.wins+' wins and '+this.losses+' losses!');
+			await new Promise(r => setTimeout(r, sleepingTime));
 		}
+	}
+
+	randBetween(min, max) {
+		let delta = max - min;
+		return Math.round(min + Math.random() * delta);
 	}
 }
 export default app

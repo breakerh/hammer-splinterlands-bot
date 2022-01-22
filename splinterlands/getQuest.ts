@@ -24,7 +24,7 @@ class GetQuest {
 	}
 
 	getPlayerQuest = (username) => (
-		fetch(`https://api.splinterlands.io/players/quests?username=${username}`,
+		fetch(`https://api2.splinterlands.com/players/quests?username=${username}`,
 			{
 				"credentials": "omit",
 				"headers": {

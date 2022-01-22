@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import {config} from "dotenv";
+import chalk from "chalk";
 config();
 
 class systemCheck {
@@ -14,7 +15,7 @@ class systemCheck {
 	checkVersion() {
 		this.versionChecked = new Promise((resolve, reject) => {
 			console.log('-----------------------------------------------------------------------------------------------------');
-			fetch('https://raw.githubusercontent.com/breakerh/hammer-splinterlands-bot/main/version.json')
+			/*fetch('https://raw.githubusercontent.com/breakerh/hammer-splinterlands-bot/main/version.json')
 				.then(response=>response.json())
 				.then(versionData=>{
 					if (versionData.version > this.version) {
@@ -24,7 +25,8 @@ class systemCheck {
 					}
 					resolve(undefined);
 				})
-				.catch(err => reject(err));
+				.catch(err => reject(err));*/
+			console.log(chalk.greenBright('Private repo so no version check anymore!'));
 			console.log('-----------------------------------------------------------------------------------------------------');
 		});
 	}
@@ -76,6 +78,10 @@ class systemCheck {
 
 	static isDebug(): boolean {
 		return JSON.parse(process.env.DEBUG.toLowerCase());
+	}
+
+	isMaintenance() {
+		return false;
 	}
 }
 

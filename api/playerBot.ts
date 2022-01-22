@@ -1,6 +1,6 @@
 import {config} from "dotenv";
 config();
-import fs from "fs";
+
 import fetch from "node-fetch";
 import puppeteer from "puppeteer";
 import systemCheck from "./systemCheck";
@@ -60,6 +60,11 @@ class playerBot {
 			timeout: 15000
 		}).then(res => res)
 			.catch(()=> console.log('Already logged in'))*/
+		let maintenance = await page.waitForSelector('.maintenance',{ timeout:2000 }).then(e => true).catch(err => false);
+		if(maintenance) {
+			console.log(chalk.yellowBright('[MAINTENANCE MODE] ')+chalk.redBright('Splinterlands is in maintenance!'));
+			return false;
+		}
 		let username = await this.getElementText(page, '.dropdown-toggle .bio__name__display', 10000);
 
 		if (username == process.env.ACCUSERNAME) {
@@ -73,14 +78,15 @@ class playerBot {
 			await page.goto('https://splinterlands.com/?p=battle_history');
 			await page.waitForTimeout(4000);
 
-			let item = await page.waitForSelector('#log_in_button > button', {
+			await page.waitForSelector('#log_in_button > button', {
 				visible: true,
-				timeout: 15000
+				timeout: 5000
 			}).then(res => res)
 				.catch(()=> console.log('Login verified'))
 		}
 
 		await this.waitUntilLoaded(page);
+		return true;
 	}
 
 	async waitUntilLoaded(page) {
@@ -129,7 +135,7 @@ class playerBot {
 
 	async checkThreshold(page){
 		if(this.ratingThresholdMin!=0&&this.ratingThresholdMax!=0){
-			const userrating = await fetch("https://api.splinterlands.io/players/details?name="+process.env.ACCUSERNAME,
+			const userrating = await fetch("https://api2.splinterlands.com/players/details?name="+process.env.ACCUSERNAME,
 				{
 					"credentials":"omit",
 					"headers":{
@@ -441,57 +447,94 @@ class playerBot {
 		await page.waitForTimeout(2000);
 
 		const teamToPlay = await this.buildTeam(matchDetails,quest);
-
+		/*let htmloutput = await page.content();
+		fs.writeFile(`./selectTeam.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
 		if (teamToPlay)
-			await page.waitForXPath(`//button[@class="btn btn--create-team"]`, { timeout: 10000 }).then(teamButton => teamButton.click());
+			await page.waitForXPath(`//button[@class="btn btn--create-team"]`, { timeout: 10000 }).then(teamButton => {console.log('click');teamButton.click()});
 		else
 			throw new Error('Team Selection error');
 
 		await page.waitForTimeout(10000);
+		let outcome = false;
 		try {
-			await this.battle(page,teamToPlay,allCards,useAPI)
+			outcome = await this.battle(page,teamToPlay,allCards,matchDetails)
 		} catch (e) {
-			let htmloutput = await page.content();
+			/*let htmloutput = await page.content();
 			fs.writeFile(`./pagerror.html`, htmloutput, function (err) {
 				if (err) {
 					console.log(err);
 				}
-			});
+			});*/
+			console.log(e);
 			console.log('No cards to select! Waiting 5 seconds')
 			await page.waitForTimeout(5000);
 			try {
-				await this.battle(page,teamToPlay,allCards,useAPI)
+				outcome = await this.battle(page,teamToPlay,allCards,this.useAPI)
 			} catch (e) {
-				let htmloutput = await page.content();
+				/*let htmloutput = await page.content();
 				fs.writeFile(`./pagerror2.html`, htmloutput, function (err) {
 					if (err) {
 						console.log(err);
 					}
-				});
+				});*/
 				//console.log('No cards to select! Waiting 5 seconds')
 				//await page.waitForTimeout(5000);
 				throw new Error(e);
 			}
 			//throw new Error(e);
 		}
+		return outcome;
 	}
 
-	async battle(page, teamToPlay, allCards, useAPI) {
+	async battle(page, teamToPlay, allCards, matchDetails) {
+		/*let htmloutput = await page.content();
+		fs.writeFile(`./preselectSummoner.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
 		await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.summoner}"]`, { timeout: 10000 }).then(summonerButton => summonerButton.click());
-		if (allCards.color(teamToPlay.cards[0]) === 'Gold') {
-			console.log('Dragon play TEAMCOLOR', allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6)))
-			await page.waitForXPath(`//div[@data-original-title="${allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6))}"]`, { timeout: 8000 })
+		/*htmloutput = await page.content();
+		fs.writeFile(`./selectSummoner.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
+		if (await allCards.color(teamToPlay.cards[0]) === 'Gold') {
+			let tasplinter = allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6));
+			console.log('Dragon play TEAMCOLOR', tasplinter)
+			await page.waitForXPath(`//div[@data-original-title="${tasplinter}"]`, { timeout: 8000 })
 				.then(selector => selector.click())
 		}
 		await page.waitForTimeout(5000);
+		/*htmloutput = await page.content();
+		fs.writeFile(`./selectcard2.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
 		for (let i = 1; i <= 6; i++) {
 			console.log('play: ', teamToPlay.cards[i].toString())
-			await teamToPlay.cards[i] ? page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, { timeout: 10000 })
-				.then(selector => selector.click()) : console.log('nocard ', i);
-			await page.waitForTimeout(1000);
+			if(teamToPlay.cards[i]) {
+				await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, {timeout: 10000})
+					.then(selector => selector.click()).catch(e=>console.error('[ERROR] can\'t find card!'))
+			}else{
+				console.log('nocard ', i);
+			}
+			await page.waitForTimeout(3000);
 		}
 
-		await page.waitForTimeout(5000);
+		await page.waitForTimeout(2000);
+		/*htmloutput = await page.content();
+		fs.writeFile(`./goforit.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
 		try {
 			await page.click('.btn-green')[0]; //start fight
 		} catch {
@@ -505,22 +548,28 @@ class playerBot {
 		await page.$eval('#btnRumble', elem => elem.click()).then(()=>console.log('btnRumble clicked')).catch(()=>console.log('btnRumble didnt click')); //start rumble
 		await page.waitForSelector('#btnSkip', { timeout: 10000 }).then(()=>console.log('btnSkip visible')).catch(()=>console.log('btnSkip not visible'));
 		await page.$eval('#btnSkip', elem => elem.click()).then(()=>console.log('btnSkip clicked')).catch(()=>console.log('btnSkip not visible')); //skip rumble
+		let outcome = false;
 		try {
-			const winner = await this.getElementText(page, 'section.player.winner .bio__name__display', 15000);
+			const winner = await this.getElementText(page, '.player.winner .bio__name__display', 15000);
 			if (winner.trim() == process.env.ACCUSERNAME.trim()) {
 				const decWon = await this.getElementText(page, '.player.winner span.dec-reward span', 1000);
 				console.log(chalk.green('You won! Reward: ' + decWon + ' DEC'));
+				this.teamCreator.reportWin(process.env.ACCUSERNAME.trim());
+				outcome = true;
 			}
 			else {
 				console.log(chalk.red('You lost :('));
-				if (useAPI)
-					this.api.reportLoss(winner);
+				this.teamCreator.reportLoss(process.env.ACCUSERNAME.trim());
+				/*if (useAPI)
+					this.api.reportLoss(winner);*/
 			}
 		} catch(e) {
 			console.log(e);
-			console.log('Could not find winner - draw?');
+			console.log('Could not find winner - draw? - Counting as a win!');
+			outcome = true;
 		}
 		await this.clickOnElement(page, '.btn--done', 1000, 2500);
+		return outcome;
 	}
 }
 
