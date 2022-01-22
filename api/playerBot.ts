@@ -135,7 +135,7 @@ class playerBot {
 
 	async checkThreshold(page){
 		if(this.ratingThresholdMin!=0&&this.ratingThresholdMax!=0){
-			const userrating = await fetch("https://api.splinterlands.io/players/details?name="+process.env.ACCUSERNAME,
+			const userrating = await fetch("https://api2.splinterlands.com/players/details?name="+process.env.ACCUSERNAME,
 				{
 					"credentials":"omit",
 					"headers":{
@@ -447,7 +447,12 @@ class playerBot {
 		await page.waitForTimeout(2000);
 
 		const teamToPlay = await this.buildTeam(matchDetails,quest);
-
+		/*let htmloutput = await page.content();
+		fs.writeFile(`./selectTeam.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
 		if (teamToPlay)
 			await page.waitForXPath(`//button[@class="btn btn--create-team"]`, { timeout: 10000 }).then(teamButton => {console.log('click');teamButton.click()});
 		else
@@ -457,23 +462,24 @@ class playerBot {
 		try {
 			await this.battle(page,teamToPlay,allCards,matchDetails)
 		} catch (e) {
-			let htmloutput = await page.content();
+			/*let htmloutput = await page.content();
 			fs.writeFile(`./pagerror.html`, htmloutput, function (err) {
 				if (err) {
 					console.log(err);
 				}
-			});
+			});*/
+			console.log(e);
 			console.log('No cards to select! Waiting 5 seconds')
 			await page.waitForTimeout(5000);
 			try {
 				await this.battle(page,teamToPlay,allCards,this.useAPI)
 			} catch (e) {
-				let htmloutput = await page.content();
+				/*let htmloutput = await page.content();
 				fs.writeFile(`./pagerror2.html`, htmloutput, function (err) {
 					if (err) {
 						console.log(err);
 					}
-				});
+				});*/
 				//console.log('No cards to select! Waiting 5 seconds')
 				//await page.waitForTimeout(5000);
 				throw new Error(e);
@@ -483,14 +489,32 @@ class playerBot {
 	}
 
 	async battle(page, teamToPlay, allCards, matchDetails) {
+		/*let htmloutput = await page.content();
+		fs.writeFile(`./preselectSummoner.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
 		await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.summoner}"]`, { timeout: 10000 }).then(summonerButton => summonerButton.click());
+		/*htmloutput = await page.content();
+		fs.writeFile(`./selectSummoner.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
 		if (await allCards.color(teamToPlay.cards[0]) === 'Gold') {
-			let tasplinter = await allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6));
+			let tasplinter = allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6));
 			console.log('Dragon play TEAMCOLOR', tasplinter)
 			await page.waitForXPath(`//div[@data-original-title="${tasplinter}"]`, { timeout: 8000 })
 				.then(selector => selector.click())
 		}
 		await page.waitForTimeout(5000);
+		/*htmloutput = await page.content();
+		fs.writeFile(`./selectcard2.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
 		for (let i = 1; i <= 6; i++) {
 			console.log('play: ', teamToPlay.cards[i].toString())
 			if(teamToPlay.cards[i]) {
@@ -503,6 +527,12 @@ class playerBot {
 		}
 
 		await page.waitForTimeout(2000);
+		/*htmloutput = await page.content();
+		fs.writeFile(`./goforit.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});*/
 		try {
 			await page.click('.btn-green')[0]; //start fight
 		} catch {

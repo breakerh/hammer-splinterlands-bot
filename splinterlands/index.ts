@@ -51,6 +51,15 @@ class app {
 	}
 
 	async loopAccounts() {
+
+		/*const allCards = new GetCards();
+		await allCards.cardsReady
+			.then(async cards => {
+
+				let test = allCards.teamActualSplinterToPlay([162,160,163,158]);
+				console.log(test);
+			});
+		return;*/
 		while (true) {
 			for (let i = 0; i < this.accounts.length; i++) {
 				process.env['EMAIL'] = this.accounts[i];

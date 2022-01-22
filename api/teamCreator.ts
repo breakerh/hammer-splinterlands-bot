@@ -354,7 +354,7 @@ class teamCreator {
 
 		let i = 0;
 		for (i = 0; i <= possibleTeams.length - 1; i++) {
-			const check = await this.getCards.teamActualSplinterToPlay(possibleTeams[i]);
+			const check = this.getCards.teamActualSplinterToPlay(possibleTeams[i]);
 			if (matchDetails.splinters.includes(possibleTeams[i][7]) && check !== '' && matchDetails.splinters.includes(check.toLowerCase())) {
 				console.log('Less than 25 teams available. SELECTED: ', possibleTeams[i]);
 				const summoner = this.getCards.makeCardId(possibleTeams[i][0].toString());
@@ -367,7 +367,7 @@ class teamCreator {
 	}
 
 	async getLastBattle(player = '', data = {}) {
-		const battleHistory = await fetch('https://game-api.splinterlands.io/battle/history?player=' + player)
+		const battleHistory = await fetch('https://api2.splinterlands.com/battle/history?player=' + player)
 			.then((response) => {
 				if (!response.ok) {
 					throw new Error('Network response was not ok');
@@ -440,7 +440,6 @@ class teamCreator {
 			});
 			fs.writeFile(__dirname.replace('api','data/newHistory.json'), JSON.stringify(this.historyFallback), err => {});
 		});
-		//this.historyFallback = require("../data/newHistory.json");
 	}
 
 	reportLoss(username) {

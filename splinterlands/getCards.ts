@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 class GetCards {
 	// @ts-ignore
 	public cardsReady: Promise.IThenable<any>;
-	private cards: object[];
+	public cards: object[];
 	public makeCardId = (id) => id;
 	public validDecks = ['Red', 'Blue', 'White', 'Black', 'Green'];
 	public colorToDeck = { 'Red': 'Fire', 'Blue': 'Water', 'White': 'Life', 'Black': 'Death', 'Green': 'Earth' };
@@ -11,7 +11,7 @@ class GetCards {
 
 	constructor() {
 		this.cardsReady = new Promise((resolve, reject) => {
-			fetch("https://api.splinterlands.io/cards/get_details",
+			fetch("https://api2.splinterlands.com/cards/get_details",
 				{
 					"credentials":"omit",
 					"headers":{
@@ -35,7 +35,7 @@ class GetCards {
 				.then((jsonResponse) => {
 					this.cards = jsonResponse;
 					//console.log(this.cards);
-					resolve(undefined);
+					resolve(this.cards);
 				})
 				.catch((error) => {
 					console.error('There has been a problem with your fetch operation:', error);
@@ -44,13 +44,20 @@ class GetCards {
 		});
 	}
 
-	async deckValidColor(accumulator, currentValue) {
-		const color = await this.color(currentValue);
-		return await this.validDecks.includes(color) ? this.colorToDeck[color] : accumulator
+	async color(id){
+		const card = await this.cards.find(o => parseInt(o["id"]) === parseInt(id));
+		return await card && card["color"] ? card["color"] : '';
 	}
 
-	async teamActualSplinterToPlay(teamIdsArray){
-		return await teamIdsArray.reduce(await this.deckValidColor, '');
+	deckValidColor(accumulator, currentValue, cards) {
+		//const color = await this.color(currentValue);
+		const card = cards.find(o => parseInt(o["id"]) === parseInt(currentValue));
+		const color = card && card["color"] ? card["color"] : '';
+		return (this.validDecks.includes(color) ? this.colorToDeck[color] : accumulator)
+	}
+
+	teamActualSplinterToPlay(teamIdsArray){
+		return teamIdsArray.reduce((acc,curr)=> this.deckValidColor(acc,curr,this.cards), '');
 	}
 
 	async getAllCards() {
@@ -62,7 +69,7 @@ class GetCards {
 	}
 
 	async getPlayerCards(username) {
-		return await fetch(`https://game-api.splinterlands.io/cards/collection/${username}`,
+		return await fetch(`https://api2.splinterlands.com/cards/collection/${username}`,
 			{
 				"credentials": "omit",
 				"headers": {
@@ -81,7 +88,7 @@ class GetCards {
 	}
 
 	async getCardDetails(username, cardId) {
-		return await fetch(`https://game-api.splinterlands.io/cards/find/?ids=${cardId}`,
+		return await fetch(`https://api2.splinterlands.com/cards/find/?ids=${cardId}`,
 			{
 				"credentials": "omit",
 				"headers": {
@@ -104,11 +111,6 @@ class GetCards {
 
 	async getAllCardIds() {
 		return this.cards.map((y) => y["id"])
-	}
-
-	async color(id){
-		const card = await this.cards.find(o => parseInt(o["id"]) === parseInt(id));
-		return await card && card["color"] ? card["color"] : '';
 	}
 
 	async getAllCardsDetails() {
