@@ -8,6 +8,8 @@ import GetQuest from "./getQuest";
 import playerBot from "../api/playerBot";
 
 class app {
+	public wins: number = 0;
+	public losses: number = 0;
 	readonly checkUpdate: boolean = JSON.parse(process.env.CHECK_UPDATES.toLowerCase());
 	readonly loginViaEmail: boolean = JSON.parse(process.env.LOGIN_VIA_EMAIL.toLowerCase());
 	readonly accountusers: string[] = process.env.ACCUSERNAME.split(',');
@@ -124,7 +126,11 @@ class app {
 				}
 
 				await bot.launchBattle(page, myCards, quest, this.claimQuestReward, this.prioritizeQuest, this.useAPI, allCards)
-					.then(() => {
+					.then((outcome) => {
+						if(outcome)
+							this.wins++;
+						else
+							this.losses++;
 						console.log('Closing battle', new Date().toLocaleString());
 					})
 					.catch((e) => {
@@ -139,8 +145,9 @@ class app {
 				}
 			}
 			const sleepingTime = this.randBetween(this.sleepingTime*.8,this.sleepingTime*1.2);
-			await console.log('Waiting for the next battle in', (sleepingTime / 1000 / 60).toFixed(2), ' minutes at ', new Date(Date.now() + sleepingTime).toLocaleString());
-			await console.log('Want to speed things up? or just support me? https://bunq.me/bramhammer');
+			console.log('Waiting for the next battle in', (sleepingTime / 1000 / 60).toFixed(2), ' minutes at ', new Date(Date.now() + sleepingTime).toLocaleString());
+			console.log('Want to speed things up? or just support me? https://bunq.me/bramhammer');
+			console.log('This session you have '+this.wins+' wins and '+this.losses+' losses!');
 			await new Promise(r => setTimeout(r, sleepingTime));
 		}
 	}

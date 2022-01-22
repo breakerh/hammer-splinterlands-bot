@@ -1,6 +1,6 @@
 import {config} from "dotenv";
 config();
-import fs from "fs";
+
 import fetch from "node-fetch";
 import puppeteer from "puppeteer";
 import systemCheck from "./systemCheck";
@@ -78,7 +78,7 @@ class playerBot {
 			await page.goto('https://splinterlands.com/?p=battle_history');
 			await page.waitForTimeout(4000);
 
-			let item = await page.waitForSelector('#log_in_button > button', {
+			await page.waitForSelector('#log_in_button > button', {
 				visible: true,
 				timeout: 5000
 			}).then(res => res)
@@ -459,8 +459,9 @@ class playerBot {
 			throw new Error('Team Selection error');
 
 		await page.waitForTimeout(10000);
+		let outcome = false;
 		try {
-			await this.battle(page,teamToPlay,allCards,matchDetails)
+			outcome = await this.battle(page,teamToPlay,allCards,matchDetails)
 		} catch (e) {
 			/*let htmloutput = await page.content();
 			fs.writeFile(`./pagerror.html`, htmloutput, function (err) {
@@ -472,7 +473,7 @@ class playerBot {
 			console.log('No cards to select! Waiting 5 seconds')
 			await page.waitForTimeout(5000);
 			try {
-				await this.battle(page,teamToPlay,allCards,this.useAPI)
+				outcome = await this.battle(page,teamToPlay,allCards,this.useAPI)
 			} catch (e) {
 				/*let htmloutput = await page.content();
 				fs.writeFile(`./pagerror2.html`, htmloutput, function (err) {
@@ -486,6 +487,7 @@ class playerBot {
 			}
 			//throw new Error(e);
 		}
+		return outcome;
 	}
 
 	async battle(page, teamToPlay, allCards, matchDetails) {
@@ -546,12 +548,14 @@ class playerBot {
 		await page.$eval('#btnRumble', elem => elem.click()).then(()=>console.log('btnRumble clicked')).catch(()=>console.log('btnRumble didnt click')); //start rumble
 		await page.waitForSelector('#btnSkip', { timeout: 10000 }).then(()=>console.log('btnSkip visible')).catch(()=>console.log('btnSkip not visible'));
 		await page.$eval('#btnSkip', elem => elem.click()).then(()=>console.log('btnSkip clicked')).catch(()=>console.log('btnSkip not visible')); //skip rumble
+		let outcome = false;
 		try {
 			const winner = await this.getElementText(page, '.player.winner .bio__name__display', 15000);
 			if (winner.trim() == process.env.ACCUSERNAME.trim()) {
 				const decWon = await this.getElementText(page, '.player.winner span.dec-reward span', 1000);
 				console.log(chalk.green('You won! Reward: ' + decWon + ' DEC'));
 				this.teamCreator.reportWin(process.env.ACCUSERNAME.trim());
+				outcome = true;
 			}
 			else {
 				console.log(chalk.red('You lost :('));
@@ -561,9 +565,11 @@ class playerBot {
 			}
 		} catch(e) {
 			console.log(e);
-			console.log('Could not find winner - draw?');
+			console.log('Could not find winner - draw? - Counting as a win!');
+			outcome = true;
 		}
 		await this.clickOnElement(page, '.btn--done', 1000, 2500);
+		return outcome;
 	}
 }
 
