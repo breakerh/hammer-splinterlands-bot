@@ -297,7 +297,7 @@ class teamCreator {
 			const filteredTeams = possibleTeams.filter(team=>team[7]===quest.splinter)
 			console.log(left + ' battles left for the '+quest.splinter+' quest')
 			console.log('play for the quest ',quest.splinter,'? ',questCheck)
-			if(left > 0 && filteredTeams && filteredTeams.length > 10 && this.splinters.includes(quest.splinter)) {
+			if(left > 0 && filteredTeams && filteredTeams.length > 5 && this.splinters.includes(quest.splinter)) {
 				console.log('PLAY for the quest with Teams: ',filteredTeams.length , filteredTeams)
 				const res = await this.mostWinningSummonerTankCombo(filteredTeams, matchDetails);
 				console.log('Play this for the quest:', res)
