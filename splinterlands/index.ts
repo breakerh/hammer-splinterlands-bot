@@ -1,7 +1,7 @@
 import {config} from "dotenv";
 config();
 
-import fetch from "node-fetch";
+
 import systemCheck from '../api/systemCheck';
 import GetCards from "./getCards";
 import GetQuest from "./getQuest";
@@ -138,10 +138,16 @@ class app {
 					await this.browsers[0].close();
 				}
 			}
-			await console.log('Waiting for the next battle in', this.sleepingTime / 1000 / 60, ' minutes at ', new Date(Date.now() + this.sleepingTime).toLocaleString());
+			const sleepingTime = this.randBetween(this.sleepingTime*.8,this.sleepingTime*1.2);
+			await console.log('Waiting for the next battle in', (sleepingTime / 1000 / 60).toFixed(2), ' minutes at ', new Date(Date.now() + sleepingTime).toLocaleString());
 			await console.log('Want to speed things up? or just support me? https://bunq.me/bramhammer');
-			await new Promise(r => setTimeout(r, this.sleepingTime));
+			await new Promise(r => setTimeout(r, sleepingTime));
 		}
+	}
+
+	randBetween(min, max) {
+		let delta = max - min;
+		return Math.round(min + Math.random() * delta);
 	}
 }
 export default app
