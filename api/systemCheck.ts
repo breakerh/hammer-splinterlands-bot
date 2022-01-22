@@ -6,7 +6,7 @@ config();
 class systemCheck {
 	// @ts-ignore
 	public versionChecked: Promise.IThenable<any>;
-	readonly version: number = 0.5;
+	readonly version: number = 0.6;
 
 	constructor() {
 
@@ -15,7 +15,7 @@ class systemCheck {
 	checkVersion() {
 		this.versionChecked = new Promise((resolve, reject) => {
 			console.log('-----------------------------------------------------------------------------------------------------');
-			/*fetch('https://raw.githubusercontent.com/breakerh/hammer-splinterlands-bot/main/version.json')
+			fetch('https://raw.githubusercontent.com/breakerh/hammer-splinterlands-bot/main/version.json')
 				.then(response=>response.json())
 				.then(versionData=>{
 					if (versionData.version > this.version) {
@@ -25,8 +25,7 @@ class systemCheck {
 					}
 					resolve(undefined);
 				})
-				.catch(err => reject(err));*/
-			console.log(chalk.greenBright('Private repo so no version check anymore!'));
+				.catch(err => reject(err));
 			console.log('-----------------------------------------------------------------------------------------------------');
 		});
 	}
@@ -52,14 +51,6 @@ class systemCheck {
 		}
 		if (!process.env.CLAIM_QUEST_REWARD) {
 			console.log("Missing \x1b[30m\x1b[41mCLAIM_QUEST_REWARD\x1b[0m parameter in .env - see updated .env-example!");
-			await systemCheck.sleep(60000);
-		}
-		if (!process.env.USE_CLASSIC_BOT_PRIVATE_API) {
-			console.log("Missing \x1b[30m\x1b[41mUSE_CLASSIC_BOT_PRIVATE_API\x1b[0m parameter in .env - see updated .env-example!");
-			await systemCheck.sleep(60000);
-		}
-		if (!process.env.USE_API) {
-			console.log("Missing \x1b[30m\x1b[41mUSE_API\x1b[0m parameter in .env - see updated .env-example!");
 			await systemCheck.sleep(60000);
 		}
 		if (!process.env.ERC_THRESHOLD) {

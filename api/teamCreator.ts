@@ -70,37 +70,7 @@ class teamCreator {
 
 	availabilityCheck(base, toCheck) { return toCheck.slice(0, 7).every(v => base.includes(v)) }
 
-	async getBattlesWithRuleset(ruleset, mana, summoners) {
-		const rulesetEncoded = encodeURIComponent(ruleset);
-		const host = process.env.API_URL || 'https://splinterlands-data-service.herokuapp.com/'
-
-		let url = ''
-		const useClassicPrivateAPI = JSON.parse(process.env.USE_CLASSIC_BOT_PRIVATE_API.toLowerCase());
-		if (useClassicPrivateAPI)
-			url = `battlesruleset?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCUSERNAME}&summoners=${summoners ? JSON.stringify(summoners) : ''}`;
-		console.log('API call: ', host+url)
-		return fetch(host+url)
-			.then(x => x && x.json())
-			.then(data => data)
-			.catch((e) => console.log('fetch ', e))
-	}
-
 	async battlesFilterByManacap(mana, ruleset, summoners) {
-		const backupLength = this.historyFallback && this.historyFallback.length
-		const useClassicPrivateAPI = JSON.parse(process.env.USE_CLASSIC_BOT_PRIVATE_API.toLowerCase());
-		if (useClassicPrivateAPI) {
-			const history = await this.getBattlesWithRuleset(ruleset, mana, summoners);
-			if (history) {
-				console.log('API battles returned ', history.length)
-				return history.filter(
-					battle =>
-						battle.mana_cap == mana &&
-						(ruleset ? battle.ruleset === ruleset : true)
-				)
-			}
-		}
-		console.log('Using Backup ', backupLength)
-
 		return this.historyFallback.filter( battle => battle.mana_cap == mana && (ruleset ? battle.ruleset === ruleset : true) )
 	}
 
@@ -317,12 +287,6 @@ class teamCreator {
 	}
 
 	async teamSelection(possibleTeams, matchDetails, quest) {
-		const useClassicPrivateAPI = JSON.parse(process.env.USE_CLASSIC_BOT_PRIVATE_API.toLowerCase());
-		//TEST V2 Strategy ONLY FOR PRIVATE API
-		if (useClassicPrivateAPI && possibleTeams[0][8]) {
-			console.log('play the most winning: ', possibleTeams[0])
-			return { summoner: possibleTeams[0][0], cards: possibleTeams[0] };
-		}
 
 		//check if daily quest is not completed
 		console.log('quest custom option set as:', process.env.QUEST_PRIORITY, typeof process.env.QUEST_PRIORITY)

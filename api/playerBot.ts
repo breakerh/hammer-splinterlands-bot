@@ -16,8 +16,6 @@ class playerBot {
 	// @ts-ignore
 	readonly ratingThresholdMax: number = parseInt(process.env.RATING_MAX);
 
-	private useAPI;
-
 	private browsers: any = [];
 	private teamCreator: teamCreator;
 	private api: connector;
@@ -324,59 +322,21 @@ class playerBot {
 
 	async buildTeam(matchDetails, quest){
 		let teamToPlay;
-		if (this.useAPI) {
-			const apiResponse = await this.api.getPossibleTeams(matchDetails);
-			if (apiResponse && !JSON.stringify(apiResponse).includes('api limit reached')) {
-				console.log('API Response', apiResponse);
 
-				teamToPlay = { summoner: Object.values(apiResponse)[1], cards: [ Object.values(apiResponse)[1], Object.values(apiResponse)[3], Object.values(apiResponse)[5], Object.values(apiResponse)[7], Object.values(apiResponse)[9],
-						Object.values(apiResponse)[11], Object.values(apiResponse)[13], Object.values(apiResponse)[15] ] };
+		const possibleTeams = await this.teamCreator.possibleTeam(matchDetails).catch(e=>console.log('Error from possible team API call: ',e));
 
-				console.log('api team', teamToPlay);
-
-				if (Object.values(apiResponse)[1] == '') {
-					console.log('Seems like the API found no possible team - using local history');
-					const possibleTeams = await this.teamCreator.possibleTeam(matchDetails).catch(e=>console.log('Error from possible team API call: ',e));
-					teamToPlay = await this.teamCreator.teamSelection(possibleTeams, matchDetails, quest);
-				}
-			}
-			else {
-				if (apiResponse && JSON.stringify(apiResponse).includes('api limit reached')) {
-					console.log('API limit per hour reached, using local backup!');
-					console.log('Visit discord or telegram group to learn more about API limits: https://t.me/ultimatesplinterlandsbot and https://discord.gg/hwSr7KNGs9');
-				} else {
-					console.log('API failed, using local history with most cards used tactic');
-				}
-				const possibleTeams = await this.teamCreator.possibleTeam(matchDetails).catch(e=>console.log('Error from possible team API call: ',e));
-
-				if (possibleTeams && possibleTeams.length) {
-					//console.log('Possible Teams based on your cards: ', possibleTeams.length, '\n', possibleTeams);
-					console.log('Possible Teams based on your cards: ', possibleTeams.length);
-				} else {
-					console.log('Error:', matchDetails, possibleTeams)
-					throw new Error('NO TEAMS available to be played');
-				}
-				teamToPlay = await this.teamCreator.teamSelection(possibleTeams, matchDetails, quest);
-				this.useAPI = false;
-			}
+		if (possibleTeams && possibleTeams.length) {
+			//console.log('Possible Teams based on your cards: ', possibleTeams.length, '\n', possibleTeams);
+			console.log('Possible Teams based on your cards: ', possibleTeams.length);
 		} else {
-			const possibleTeams = await this.teamCreator.possibleTeam(matchDetails).catch(e=>console.log('Error from possible team API call: ',e));
-
-			if (possibleTeams && possibleTeams.length) {
-				//console.log('Possible Teams based on your cards: ', possibleTeams.length, '\n', possibleTeams);
-				console.log('Possible Teams based on your cards: ', possibleTeams.length);
-			} else {
-				console.log('Error:', matchDetails, possibleTeams)
-				throw new Error('NO TEAMS available to be played');
-			}
-			teamToPlay = await this.teamCreator.teamSelection(possibleTeams, matchDetails, quest);
-			this.useAPI = false;
+			console.log('Error:', matchDetails, possibleTeams)
+			throw new Error('NO TEAMS available to be played');
 		}
+		teamToPlay = await this.teamCreator.teamSelection(possibleTeams, matchDetails, quest);
 		return teamToPlay;
 	}
 
-	async launchBattle(page, myCards, quest, claimQuestReward, prioritizeQuest, useAPI, allCards){
-		this.useAPI = useAPI;
+	async launchBattle(page, myCards, quest, claimQuestReward, prioritizeQuest, allCards){
 		try {
 			if (systemCheck.isDebug())
 				console.log('waiting for battle button...')
@@ -461,7 +421,7 @@ class playerBot {
 		await page.waitForTimeout(10000);
 		let outcome = false;
 		try {
-			outcome = await this.battle(page,teamToPlay,allCards,matchDetails)
+			outcome = await this.battle(page,teamToPlay,allCards)
 		} catch (e) {
 			/*let htmloutput = await page.content();
 			fs.writeFile(`./pagerror.html`, htmloutput, function (err) {
@@ -473,7 +433,7 @@ class playerBot {
 			console.log('No cards to select! Waiting 5 seconds')
 			await page.waitForTimeout(5000);
 			try {
-				outcome = await this.battle(page,teamToPlay,allCards,this.useAPI)
+				outcome = await this.battle(page,teamToPlay,allCards)
 			} catch (e) {
 				/*let htmloutput = await page.content();
 				fs.writeFile(`./pagerror2.html`, htmloutput, function (err) {
@@ -490,7 +450,7 @@ class playerBot {
 		return outcome;
 	}
 
-	async battle(page, teamToPlay, allCards, matchDetails) {
+	async battle(page, teamToPlay, allCards) {
 		/*let htmloutput = await page.content();
 		fs.writeFile(`./preselectSummoner.html`, htmloutput, function (err) {
 			if (err) {
@@ -560,8 +520,6 @@ class playerBot {
 			else {
 				console.log(chalk.red('You lost :('));
 				this.teamCreator.reportLoss(process.env.ACCUSERNAME.trim());
-				/*if (useAPI)
-					this.api.reportLoss(winner);*/
 			}
 		} catch(e) {
 			console.log(e);

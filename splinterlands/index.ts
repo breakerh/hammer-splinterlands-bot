@@ -16,7 +16,6 @@ class app {
 	readonly accounts: string[] = this.loginViaEmail ? process.env.EMAIL.split(',') : this.accountusers;
 	readonly passwords: string[] = process.env.PASSWORD.split(',');
 	readonly headless: boolean = JSON.parse(process.env.HEADLESS.toLowerCase());
-	readonly useAPI: boolean = JSON.parse(process.env.USE_API.toLowerCase());
 	readonly keepBrowserOpen: boolean = JSON.parse(process.env.KEEP_BROWSER_OPEN.toLowerCase());
 	readonly claimQuestReward: boolean = JSON.parse(process.env.CLAIM_QUEST_REWARD.toLowerCase());
 	readonly claimSeasonReward: boolean = JSON.parse(process.env.CLAIM_SEASON_REWARD.toLowerCase());
@@ -41,7 +40,6 @@ class app {
 					console.log('Login via Email', this.loginViaEmail);
 					console.log('Claim Quest Reward', this.claimQuestReward);
 					console.log('Prioritize Quests', this.prioritizeQuest);
-					console.log('Use API', this.useAPI);
 					console.log('Loaded', this.accounts.length, ' Accounts')
 					console.log('START ', this.accounts, new Date().toLocaleString())
 				}
@@ -125,7 +123,7 @@ class app {
 					await page.waitForTimeout(5000);
 				}
 
-				await bot.launchBattle(page, myCards, quest, this.claimQuestReward, this.prioritizeQuest, this.useAPI, allCards)
+				await bot.launchBattle(page, myCards, quest, this.claimQuestReward, this.prioritizeQuest, allCards)
 					.then((outcome) => {
 						if(outcome)
 							this.wins++;
