@@ -7,6 +7,8 @@ import systemCheck from "./systemCheck";
 import chalk from "chalk";
 import teamCreator from "./teamCreator";
 import connector from "./connector";
+import GetCards from "../splinterlands/getCards";
+//import getCards from "../splinterlands/getCards";
 
 class playerBot {
 	// @ts-ignore
@@ -16,6 +18,7 @@ class playerBot {
 	// @ts-ignore
 	readonly ratingThresholdMax: number = parseInt(process.env.RATING_MAX);
 
+	private getCards;
 	private browsers: any = [];
 	private teamCreator: teamCreator;
 	private api: connector;
@@ -323,6 +326,8 @@ class playerBot {
 	async buildTeam(matchDetails, quest){
 		let teamToPlay;
 
+		this.teamCreator.passCards(this.getCards);
+
 		const possibleTeams = await this.teamCreator.possibleTeam(matchDetails).catch(e=>console.log('Error from possible team API call: ',e));
 
 		if (possibleTeams && possibleTeams.length) {
@@ -528,6 +533,10 @@ class playerBot {
 		}
 		await this.clickOnElement(page, '.btn--done', 1000, 2500);
 		return outcome;
+	}
+
+	passCards(allCards: GetCards) {
+		this.getCards = GetCards;
 	}
 }
 

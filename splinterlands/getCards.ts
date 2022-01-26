@@ -44,6 +44,11 @@ class GetCards {
 		});
 	}
 
+	deck(id){
+		const card = this.cards.find(o => parseInt(o["id"]) === parseInt(id));
+		return card && card["color"] ? this.colorToDeck[card["color"]] : '';
+	}
+
 	async color(id){
 		const card = await this.cards.find(o => parseInt(o["id"]) === parseInt(id));
 		return await card && card["color"] ? card["color"] : '';

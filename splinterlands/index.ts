@@ -84,6 +84,7 @@ class app {
 				if (systemCheck.isDebug())
 					console.log('getting user quest info from splinterlands API...');
 
+				bot.passCards(allCards);
 				const quest = await allQuests.getPlayerQuest(this.accountusers[i].split('@')[0]);
 
 				if (!quest)

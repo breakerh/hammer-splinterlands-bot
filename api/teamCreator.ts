@@ -1,5 +1,4 @@
 import fetch from "node-fetch";
-import GetCards from "../splinterlands/getCards";
 import {config} from "dotenv";
 import fs from "fs";
 config();
@@ -7,48 +6,10 @@ config();
 class teamCreator {
 	historyFallback = require("../data/newHistory.json");
 	readonly basicCards = require('../data/basicCards.js');
-	readonly summoners = [{ 224: 'dragon' },
-		{ 27: 'earth' },
-		{ 16: 'water' },
-		{ 156: 'life' },
-		{ 189: 'earth' },
-		{ 167: 'fire' },
-		{ 145: 'death' },
-		{ 5: 'fire' },
-		{ 71: 'water' },
-		{ 114: 'dragon' },
-		{ 178: 'water' },
-		{ 110: 'fire' },
-		{ 49: 'death' },
-		{ 88: 'dragon' },
-		{ 38: 'life' },
-		{ 239: 'life' },
-		{ 74: 'death' },
-		{ 78: 'dragon' },
-		{ 260: 'fire' },
-		{ 70: 'fire' },
-		{ 109: 'death' },
-		{ 111: 'water' },
-		{ 112: 'earth' },
-		{ 130: 'dragon' },
-		{ 72: 'earth' },
-		{ 235: 'dragon' },
-		{ 56: 'dragon' },
-		{ 113: 'life' },
-		{ 200: 'dragon' },
-		{ 236: 'fire' },
-		{ 240: 'dragon' },
-		{ 254: 'water' },
-		{ 257: 'water' },
-		{ 258: 'death' },
-		{ 259: 'earth' },
-		{ 261: 'life' },
-		{ 262: 'dragon' },
-		{ 278: 'earth' },
-		{ 73: 'life' }]
+	readonly summoners = [{260:'fire'},{257:'water'},{437:'water'},{224:'dragon'},{189:'earth'},{145:'death'},{240:'dragon'},{167:'fire'},{438:'death'},{156:'life'},{440:'fire'},{114:'dragon'},{441:'life'},{439:'earth'},{262:'dragon'},{261:'life'},{178:'water'},{258:'death'},{27:'earth'},{38:'life'},{49:'death'},{5:'fire'},{70:'fire'},{73:'life'},{259:'earth'},{74:'death'},{72:'earth'},{442:'dragon'},{71:'water'},{88:'dragon'},{78:'dragon'},{200:'dragon'},{16:'water'},{239:'life'},{254:'water'},{235:'death'},{113:'life'},{109:'death'},{110:'fire'},{291:'dragon'},{278:'earth'},{236:'fire'},{56:'dragon'},{112:'earth'},{111:'water'},{205:'dragon'},{130:'dragon'}]
 	readonly splinters = ['fire', 'life', 'earth', 'water', 'death', 'dragon']
 	private chosenTeam = null;
-	private getCards = new GetCards();
+	private getCards;
 
 	constructor() {
 	}
@@ -64,6 +25,7 @@ class teamCreator {
 	}
 
 	summonerColor(id) {
+		//return this.getCards.deck(id);
 		const summonerDetails = this.summoners.find(x => x[id]);
 		return summonerDetails ? summonerDetails[id] : '';
 	}
@@ -297,7 +259,7 @@ class teamCreator {
 			const filteredTeams = possibleTeams.filter(team=>team[7]===quest.splinter)
 			console.log(left + ' battles left for the '+quest.splinter+' quest')
 			console.log('play for the quest ',quest.splinter,'? ',questCheck)
-			if(left > 0 && filteredTeams && filteredTeams.length > 5 && this.splinters.includes(quest.splinter)) {
+			if(left > 0 && filteredTeams && filteredTeams.length > 10 && this.splinters.includes(quest.splinter)) {
 				console.log('PLAY for the quest with Teams: ',filteredTeams.length , filteredTeams)
 				const res = await this.mostWinningSummonerTankCombo(filteredTeams, matchDetails);
 				console.log('Play this for the quest:', res)
@@ -421,6 +383,10 @@ class teamCreator {
 			});
 			fs.writeFile(__dirname.replace('api','data/newHistory.json'), JSON.stringify(this.historyFallback), err => {});
 		});
+	}
+
+	passCards(getCards) {
+		this.getCards = getCards;
 	}
 }
 
