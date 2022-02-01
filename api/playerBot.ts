@@ -8,6 +8,7 @@ import chalk from "chalk";
 import teamCreator from "./teamCreator";
 import connector from "./connector";
 import GetCards from "../splinterlands/getCards";
+import fs from "fs";
 //import getCards from "../splinterlands/getCards";
 
 class playerBot {
@@ -408,7 +409,9 @@ class playerBot {
 			myCards: myCards,
 			quest: (prioritizeQuest && quest && (quest.total != quest.completed)) ? quest : '',
 		}
-
+		console.log("splinters: ",splinters);
+		console.log("Rules: ",rules);
+		console.log("mana: ",mana);
 		await page.waitForTimeout(2000);
 
 		const teamToPlay = await this.buildTeam(matchDetails,quest);
@@ -482,11 +485,24 @@ class playerBot {
 				console.log(err);
 			}
 		});*/
+		let date = new Date();
+		//await page.waitForSelector(`.filter-attack-type.selected`, {timeout: 1000}).then(type => type.click()).catch(async e=>{/*await page.screenshot({path: 'pre-carderror-'+date.toDateString().replace(/\s+/g, '-')+'.png'});*/});
 		for (let i = 1; i <= 6; i++) {
 			console.log('play: ', teamToPlay.cards[i].toString())
 			if(teamToPlay.cards[i]) {
+				await page.waitForSelector(`.filter-attack-type.selected`, {timeout: 1000}).then(type => type.click()).catch(async e=>{/*await page.screenshot({path: 'pre-carderror-'+date.toDateString().replace(/\s+/g, '-')+'.png'});*/});
 				await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, {timeout: 10000})
-					.then(selector => selector.click()).catch(e=>console.error('[ERROR] can\'t find card!'))
+					.then(selector => selector.click()).catch(async e=>{
+						let date = new Date();
+						await page.screenshot({path: 'carderror-'+teamToPlay.cards[i].toString()+'-'+date.toDateString().replace(/\s+/g, '-')+'.png'});
+						let htmloutput = await page.content();
+						fs.writeFile(`./selectcarderror`+teamToPlay.cards[i].toString()+`.html`, htmloutput, function (err) {
+							if (err) {
+								console.log(err);
+							}
+						});
+						console.error('[ERROR] can\'t find card!');
+					})
 			}else{
 				console.log('nocard ', i);
 			}

@@ -3,13 +3,16 @@ import fetch from "node-fetch";
 class GetCards {
 	// @ts-ignore
 	public cardsReady: Promise.IThenable<any>;
-	public cards: object[];
+	public cards: any;
 	public makeCardId = (id) => id;
 	public validDecks = ['Red', 'Blue', 'White', 'Black', 'Green'];
 	public colorToDeck = { 'Red': 'Fire', 'Blue': 'Water', 'White': 'Life', 'Black': 'Death', 'Green': 'Earth' };
 	readonly basicCards = require('../data/basicCards.js');
+	readonly exclude = [158,162,180,183,184,185,194,367,371,373,374,395,398,401];
+	public starters = [];
 
-	constructor() {
+	constructor(starters) {
+		this.starters = starters;
 		this.cardsReady = new Promise((resolve, reject) => {
 			fetch("https://api2.splinterlands.com/cards/get_details",
 				{
@@ -34,7 +37,7 @@ class GetCards {
 				})
 				.then((jsonResponse) => {
 					this.cards = jsonResponse;
-					//console.log(this.cards);
+					console.log(this.cards.length);
 					resolve(this.cards);
 				})
 				.catch((error) => {
@@ -90,6 +93,16 @@ class GetCards {
 			.then(x => x['cards'] ? x['cards'].filter(x=>x.delegated_to === null || x.delegated_to === username).map(card => card.card_detail_id) : '')
 			.then(advanced => this.basicCards.concat(advanced))
 			.catch(e => {console.log('Using only basic cards due to error when getting user collection from splinterlands: ',e); return this.basicCards})
+		/*
+		let cards = this.cards.filter(c => (c.editions===null || c.editions.split(',').find(id=>this.starters.includes(parseInt(id))))&&c.rarity<3).map(c=>parseInt(c.id));
+				if (systemCheck.isDebug()) {
+					console.log(cards.filter(id => !this.basicCards.includes(parseInt(id))));
+					console.log(cards.length);
+					console.log(cards.concat(advanced).length);
+				}
+				//console.log(this.basicCards.filter(id=>!test.includes(parseInt(id))))
+				return cards.concat(advanced)
+		*/
 	}
 
 	async getCardDetails(username, cardId) {
@@ -129,6 +142,7 @@ class GetCards {
 			'color': y["color"]})
 		)
 	}
+
 }
 
 export default GetCards

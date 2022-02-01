@@ -1,4 +1,5 @@
 import {config} from "dotenv";
+import fetch from "node-fetch";
 config();
 
 
@@ -22,6 +23,7 @@ class app {
 	readonly prioritizeQuest: boolean = JSON.parse(process.env.QUEST_PRIORITY.toLowerCase());
 	readonly sleepingTime: number = (parseInt(process.env.MINUTES_BATTLES_INTERVAL) || 30) * 60000;
 	private browsers: any = []; // ?Browser[]
+	public playerSettings: any = [];
 
 	// @ts-ignore
 	public isReady: Promise.IThenable<any>;
@@ -74,7 +76,8 @@ class app {
 					this.browsers = await bot.createBrowsers(1, this.headless);
 
 				const page = (await (this.keepBrowserOpen ? this.browsers[i] : this.browsers[0]).pages())[1];
-				const allCards = new GetCards();
+				const playerSettings = await this.getPlayerSettings();
+				const allCards = new GetCards(playerSettings.starter_editions.map(id => parseInt(id)));
 				const allQuests = new GetQuest();
 				if (systemCheck.isDebug())
 					console.log('getting user cards collection from splinterlands API...')
@@ -83,7 +86,7 @@ class app {
 					.catch(() => console.log('cards collection api didnt respond. Did you use username? avoid email!'));
 				if (systemCheck.isDebug())
 					console.log('getting user quest info from splinterlands API...');
-
+				console.log(myCards.length);
 				bot.passCards(allCards);
 				const quest = await allQuests.getPlayerQuest(this.accountusers[i].split('@')[0]);
 
@@ -148,6 +151,30 @@ class app {
 			console.log('This session you have '+this.wins+' wins and '+this.losses+' losses!');
 			await new Promise(r => setTimeout(r, sleepingTime));
 		}
+	}
+
+	async getPlayerSettings() {
+		return await fetch("https://api2.splinterlands.com/settings?config_version=5&username="+process.env.ACCUSERNAME,
+			{
+				"credentials":"omit",
+				"headers":{
+					"accept":"application/json, text/javascript, */*; q=0.01",
+					"accept-language":"en-GB,en-US;q=0.9,en;q=0.8"
+				},
+				"referrer":"https://splinterlands.io/?p=battle_history",
+				"referrerPolicy":"no-referrer-when-downgrade",
+				"body":null,
+				"method":"GET",
+				"mode":"cors"
+			})
+			.then(response=>response.json())
+			.then(response => {
+				return response;
+			})
+			.catch((error) => {
+				console.error('There has been a problem with your fetch operation:', error);
+				return false;
+			});
 	}
 
 	randBetween(min, max) {
