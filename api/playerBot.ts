@@ -9,6 +9,8 @@ import teamCreator from "./teamCreator";
 import connector from "./connector";
 import GetCards from "../splinterlands/getCards";
 import fs from "fs";
+const {Webhook, MessageBuilder} = require('discord-webhook-node');
+const IMAGE_URL = 'https://i.imgur.com/Ide54Jx.png';
 //import getCards from "../splinterlands/getCards";
 
 class playerBot {
@@ -19,14 +21,43 @@ class playerBot {
 	// @ts-ignore
 	readonly ratingThresholdMax: number = parseInt(process.env.RATING_MAX);
 
+	private wins: number = 0;
+	private losses: number = 0;
+	private draw: number = 0;
+
 	private getCards;
 	private browsers: any = [];
 	private teamCreator: teamCreator;
 	private api: connector;
+	private decWon: any;
 
-	constructor() {
+	private hook: any = false;
+
+	constructor(wins,losses,draw) {
 		this.teamCreator = new teamCreator();
 		this.api = new connector();
+		this.wins = wins;
+		this.losses = losses;
+		this.draw = draw;
+
+		if(process.env.DISCORD_BOT!==undefined && (process.env.DISCORD_BOT).length>1 && (process.env.DISCORD_BOT)!=="false") {
+			this.hook = new Webhook(process.env.DISCORD_BOT);
+			this.hook.setUsername(process.env.ACCUSERNAME + ' bot');
+			this.hook.setAvatar(IMAGE_URL);
+		}
+
+		if(this.wins===0&&this.losses===0&&this.draw===0&&this.hook!==false) {
+			const embed = new MessageBuilder()
+				.setTitle('Firing up the engines!')
+				.setAuthor('Splinterlands Bot', IMAGE_URL, 'https://splinterlands.com/')
+				.addField('ERC threshold', this.ercThreshold.toString(), false)
+				.addField('Rating Threshold Min/Max', this.ratingThresholdMin.toString() + '/' + this.ratingThresholdMax.toString(), false)
+				.setColor('#212121')
+				.setFooter('Want more information?, look in your npm log!')
+				.setTimestamp();
+
+			this.hook.send(embed);
+		}
 	}
 
 	async createBrowsers(count: number, headless: boolean) {
@@ -84,7 +115,9 @@ class playerBot {
 				visible: true,
 				timeout: 5000
 			}).then(res => res)
-				.catch(()=> console.log('Login verified'))
+				.catch(()=> {
+					console.log('Login verified')
+				})
 		}
 
 		await this.waitUntilLoaded(page);
@@ -136,6 +169,11 @@ class playerBot {
 	}
 
 	async checkThreshold(page){
+		const embed = new MessageBuilder();
+			embed.setAuthor('Splinterlands Bot', IMAGE_URL, 'https://splinterlands.com/')
+			.setColor('#60de15')
+			.setFooter('Want more information?, look in your npm log!')
+			.setTimestamp();
 		if(this.ratingThresholdMin!=0&&this.ratingThresholdMax!=0){
 			const userrating = await fetch("https://api2.splinterlands.com/players/details?name="+process.env.ACCUSERNAME,
 				{
@@ -154,25 +192,45 @@ class playerBot {
 				.then((response) => {
 					let rating: number = parseInt(response.rating);
 					console.log('Current Rating is ' + rating);
+
 					if (rating < this.ratingThresholdMin || (this.ratingThresholdMax !== 0 && rating > this.ratingThresholdMax)){
+
+						embed.setTitle('Fun is over.. Rating has hit threshold')
+							.addField('Min/Max', this.ratingThresholdMin.toString()+' / '+this.ratingThresholdMax.toString(), false);
 						console.log('Rating has hit the threshold (min: ' + this.ratingThresholdMin + ', max: ' + this.ratingThresholdMax + ')');
 						return false;
 					}
+					embed.addField('Rating', response.rating, false);
 					return true;
 				})
 				.catch((error) => {
+
+					embed.setTitle('Fun is over.. Unknown error')
+						.setDescription(error);
 					console.error('There has been a problem with your fetch operation:', error);
 					return false;
 				});
-			if(!userrating)
+			if(!userrating&&this.hook!==false) {
+				embed.setColor('#ff0000');
+				this.hook.send(embed);
 				return;
+			}
 		}
 		const erc = (await this.getElementTextByXpath(page, "//div[@class='dec-options'][1]/div[@class='value'][2]/div", 1000)).split('.')[0];
 		console.log('Current Energy Capture Rate is ' + erc + "%");
 		if (parseInt(erc) < this.ercThreshold) {
 			console.log('ERC is below threshold of ' + this.ercThreshold + '% - skipping this account');
+
+			embed.setTitle('Fun is over.. ERC threshold hit')
+				.addField('ERC Rating', erc, false)
+				.setColor('#ff0000');
+			if(this.hook!==false)
+				this.hook.send(embed);
 			return false;
 		}
+		embed.addField('ERC Rating', erc, false);
+		if(this.hook!==false)
+			this.hook.send(embed);
 		return true;
 	}
 
@@ -431,30 +489,42 @@ class playerBot {
 		try {
 			outcome = await this.battle(page,teamToPlay,allCards)
 		} catch (e) {
-			/*let htmloutput = await page.content();
-			fs.writeFile(`./pagerror.html`, htmloutput, function (err) {
-				if (err) {
-					console.log(err);
-				}
-			});*/
-			console.log(e);
-			console.log('No cards to select! Waiting 5 seconds')
+			if(systemCheck.isDebug())
+				console.log(e);
+			console.warn('No cards to select! Waiting 5 seconds')
 			await page.waitForTimeout(5000);
 			try {
-				outcome = await this.battle(page,teamToPlay,allCards)
+				outcome = await this.battle(page,teamToPlay,allCards);
 			} catch (e) {
-				/*let htmloutput = await page.content();
-				fs.writeFile(`./pagerror2.html`, htmloutput, function (err) {
-					if (err) {
-						console.log(err);
-					}
-				});*/
-				//console.log('No cards to select! Waiting 5 seconds')
-				//await page.waitForTimeout(5000);
 				throw new Error(e);
 			}
-			//throw new Error(e);
 		}
+		const embed = new MessageBuilder();
+		if(outcome===null){
+			embed.setTitle('Uhm - that\'s a draw!')
+				.setAuthor('Splinterlands Bot', IMAGE_URL, 'https://splinterlands.com/')
+				.addField('Wins / Losses / Draw', this.wins.toString()+' / '+this.losses.toString()+' / '+this.draw.toString(), false)
+				.setColor('#cccdb3')
+				.setFooter('Want more information?, look in your npm log!')
+				.setTimestamp();
+		}else if(outcome===true){
+			embed.setTitle('Yeah - that\'s a win!')
+				.setAuthor('Splinterlands Bot', IMAGE_URL, 'https://splinterlands.com/')
+				.addField('Dec Won', this.decWon, false)
+				.addField('Wins / Losses / Draw', this.wins.toString()+' / '+this.losses.toString()+' / '+this.draw.toString(), false)
+				.setColor('#57de39')
+				.setFooter('Want more information?, look in your npm log!')
+				.setTimestamp();
+		}else{
+			embed.setTitle('Ahw - you\'ve lost!')
+				.setAuthor('Splinterlands Bot', IMAGE_URL, 'https://splinterlands.com/')
+				.addField('Wins / Losses / Draw', this.wins.toString()+' / '+this.losses.toString()+' / '+this.draw.toString(), false)
+				.setColor('#dc2727')
+				.setFooter('Want more information?, look in your npm log!')
+				.setTimestamp();
+		}
+		if(this.hook!==false)
+			this.hook.send(embed);
 		return outcome;
 	}
 
@@ -490,18 +560,45 @@ class playerBot {
 		for (let i = 1; i <= 6; i++) {
 			console.log('play: ', teamToPlay.cards[i].toString())
 			if(teamToPlay.cards[i]) {
-				await page.waitForSelector(`.filter-attack-type.selected`, {timeout: 1000}).then(type => type.click()).catch(async e=>{/*await page.screenshot({path: 'pre-carderror-'+date.toDateString().replace(/\s+/g, '-')+'.png'});*/});
 				await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, {timeout: 10000})
 					.then(selector => selector.click()).catch(async e=>{
 						let date = new Date();
-						await page.screenshot({path: 'carderror-'+teamToPlay.cards[i].toString()+'-'+date.toDateString().replace(/\s+/g, '-')+'.png'});
-						let htmloutput = await page.content();
-						fs.writeFile(`./selectcarderror`+teamToPlay.cards[i].toString()+`.html`, htmloutput, function (err) {
-							if (err) {
-								console.log(err);
+						const cardid = teamToPlay.cards[i].toString();
+						if(systemCheck.isDebug())
+							await page.screenshot({path: 'carderror-'+cardid+'-'+date.toDateString().replace(/\s+/g, '-')+'.png'});
+						let location = await page.evaluate((cardid,systemCheck) => {
+							const pagecard = document.querySelector('div[card_detail_id="'+cardid+'"]');
+							if(pagecard) {
+								pagecard.setAttribute('style', '');
+								if (systemCheck.isDebug()) {
+									pagecard.addEventListener('click', (e) => {
+										// @ts-ignore
+										e.target.setAttribute('style', 'border:10px solid red;');
+									});
+								}
+								pagecard.scrollIntoView();
+								const rect = pagecard.getBoundingClientRect();
+								return {
+									left: rect.left + window.scrollX,
+									top: rect.top + window.scrollY
+								};
 							}
-						});
-						console.error('[ERROR] can\'t find card!');
+							return false;
+						},[cardid,systemCheck]);
+						if(location!==false) {
+							console.error('[ERROR] can\'t find card, hopefully hack works!');
+							await page.mouse.click(location.left + 10, location.top + 10);
+						}else
+							console.error('[ERROR] can\'t find card at all!');
+						if(systemCheck.isDebug()) {
+							await page.screenshot({path: 'carderror-' + cardid + '-' + date.toDateString().replace(/\s+/g, '-') + '-pre.png'});
+							let htmloutput = await page.content();
+							fs.writeFile(`./selectcarderror` + teamToPlay.cards[i].toString() + `.html`, htmloutput, function (err) {
+								if (err) {
+									console.log(err);
+								}
+							});
+						}
 					})
 			}else{
 				console.log('nocard ', i);
@@ -533,19 +630,23 @@ class playerBot {
 		try {
 			const winner = await this.getElementText(page, '.player.winner .bio__name__display', 15000);
 			if (winner.trim() == process.env.ACCUSERNAME.trim()) {
+				this.wins++;
 				const decWon = await this.getElementText(page, '.player.winner span.dec-reward span', 1000);
+				this.decWon = decWon;
 				console.log(chalk.green('You won! Reward: ' + decWon + ' DEC'));
 				this.teamCreator.reportWin(process.env.ACCUSERNAME.trim());
 				outcome = true;
 			}
 			else {
+				this.losses++;
 				console.log(chalk.red('You lost :('));
 				this.teamCreator.reportLoss(process.env.ACCUSERNAME.trim());
 			}
 		} catch(e) {
 			console.log(e);
-			console.log('Could not find winner - draw? - Counting as a win!');
-			outcome = true;
+			console.log('Could not find winner - draw?!');
+			this.draw++;
+			outcome = null;
 		}
 		await this.clickOnElement(page, '.btn--done', 1000, 2500);
 		return outcome;

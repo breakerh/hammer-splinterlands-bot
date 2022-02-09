@@ -9,6 +9,7 @@ import GetQuest from "./getQuest";
 import playerBot from "../api/playerBot";
 
 class app {
+	public draw: number = 0;
 	public wins: number = 0;
 	public losses: number = 0;
 	readonly checkUpdate: boolean = JSON.parse(process.env.CHECK_UPDATES.toLowerCase());
@@ -67,7 +68,7 @@ class app {
 				process.env['PASSWORD'] = this.passwords[i];
 				process.env['ACCUSERNAME'] = this.accountusers[i];
 
-				const bot = new playerBot();
+				const bot = new playerBot(this.wins,this.losses, this.draw);
 
 				console.log('Opening browser');
 				if (this.keepBrowserOpen && this.browsers.length == 0)
@@ -76,6 +77,7 @@ class app {
 					this.browsers = await bot.createBrowsers(1, this.headless);
 
 				const page = (await (this.keepBrowserOpen ? this.browsers[i] : this.browsers[0]).pages())[1];
+
 				const playerSettings = await this.getPlayerSettings();
 				const allCards = new GetCards(playerSettings.starter_editions.map(id => parseInt(id)));
 				const allQuests = new GetQuest();
@@ -128,7 +130,9 @@ class app {
 
 				await bot.launchBattle(page, myCards, quest, this.claimQuestReward, this.prioritizeQuest, allCards)
 					.then((outcome) => {
-						if(outcome)
+						if(outcome===null)
+							this.draw++;
+						else if(outcome===true)
 							this.wins++;
 						else
 							this.losses++;
@@ -148,7 +152,7 @@ class app {
 			const sleepingTime = this.randBetween(this.sleepingTime*.8,this.sleepingTime*1.2);
 			console.log('Waiting for the next battle in', (sleepingTime / 1000 / 60).toFixed(2), ' minutes at ', new Date(Date.now() + sleepingTime).toLocaleString());
 			console.log('Want to speed things up? or just support me? https://bunq.me/bramhammer');
-			console.log('This session you have '+this.wins+' wins and '+this.losses+' losses!');
+			console.log('This session you have '+this.wins+' wins, '+this.losses+' losses and '+this.draw+' draws!');
 			await new Promise(r => setTimeout(r, sleepingTime));
 		}
 	}

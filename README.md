@@ -27,8 +27,12 @@ Feel free to give suggestions for features/code refurbishing via [github as an i
 - Minimum Energy Capture Rate - the bot will pause automatically if the energy capture rate is below a specified percentage
 - Minimum & maximum Rating - the bot will pause automatically if the rating is below or above a specified score
 - Option to disable automatic quest reward chest opening
-- **Coming Soon**: Statistics on how each account is performing
-- **Coming Soon**: Zapier integration
+- Statistics on how each account is performing
+- Discord bot through webhooks
+- Can't find card fallback through page evaluation
+- screenshot and html dumps for error loggin when debug is enabled
+- enhanced battlesgetdata file
+- combine also filters out duplicates
 - Any suggestions?
 
 # Support / Community
