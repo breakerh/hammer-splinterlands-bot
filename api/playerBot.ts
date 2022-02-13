@@ -33,8 +33,8 @@ class playerBot {
 
 	private hook: any = false;
 
-	constructor(wins,losses,draw) {
-		this.teamCreator = new teamCreator();
+	constructor(wins,losses,draw, history) {
+		this.teamCreator = new teamCreator(history);
 		this.api = new connector();
 		this.wins = wins;
 		this.losses = losses;
@@ -529,19 +529,8 @@ class playerBot {
 	}
 
 	async battle(page, teamToPlay, allCards) {
-		/*let htmloutput = await page.content();
-		fs.writeFile(`./preselectSummoner.html`, htmloutput, function (err) {
-			if (err) {
-				console.log(err);
-			}
-		});*/
+
 		await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.summoner}"]`, { timeout: 10000 }).then(summonerButton => summonerButton.click());
-		/*htmloutput = await page.content();
-		fs.writeFile(`./selectSummoner.html`, htmloutput, function (err) {
-			if (err) {
-				console.log(err);
-			}
-		});*/
 		if (await allCards.color(teamToPlay.cards[0]) === 'Gold') {
 			let tasplinter = allCards.teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6));
 			console.log('Dragon play TEAMCOLOR', tasplinter)
@@ -549,57 +538,47 @@ class playerBot {
 				.then(selector => selector.click())
 		}
 		await page.waitForTimeout(5000);
-		/*htmloutput = await page.content();
-		fs.writeFile(`./selectcard2.html`, htmloutput, function (err) {
-			if (err) {
-				console.log(err);
-			}
-		});*/
 		let date = new Date();
-		//await page.waitForSelector(`.filter-attack-type.selected`, {timeout: 1000}).then(type => type.click()).catch(async e=>{/*await page.screenshot({path: 'pre-carderror-'+date.toDateString().replace(/\s+/g, '-')+'.png'});*/});
 		for (let i = 1; i <= 6; i++) {
 			console.log('play: ', teamToPlay.cards[i].toString())
 			if(teamToPlay.cards[i]) {
-				await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, {timeout: 10000})
-					.then(selector => selector.click()).catch(async e=>{
-						let date = new Date();
-						const cardid = teamToPlay.cards[i].toString();
-						if(systemCheck.isDebug())
-							await page.screenshot({path: 'carderror-'+cardid+'-'+date.toDateString().replace(/\s+/g, '-')+'.png'});
-						let location = await page.evaluate((cardid,systemCheck) => {
-							const pagecard = document.querySelector('div[card_detail_id="'+cardid+'"]');
-							if(pagecard) {
-								pagecard.setAttribute('style', '');
-								if (systemCheck.isDebug()) {
-									pagecard.addEventListener('click', (e) => {
-										// @ts-ignore
-										e.target.setAttribute('style', 'border:10px solid red;');
-									});
-								}
-								pagecard.scrollIntoView();
-								const rect = pagecard.getBoundingClientRect();
-								return {
-									left: rect.left + window.scrollX,
-									top: rect.top + window.scrollY
-								};
-							}
-							return false;
-						},[cardid,systemCheck]);
-						if(location!==false) {
-							console.error('[ERROR] can\'t find card, hopefully hack works!');
-							await page.mouse.click(location.left + 10, location.top + 10);
-						}else
+				await page.$$eval('.filter-attack-type.selected', selected => {
+					if(selected.length>0 && selected.length<3) {
+						selected.forEach(select => {
+							select.click();
+						})
+					}
+				});
+				await page.waitForSelector(`div[card_detail_id="${teamToPlay.cards[i].toString()}"]`, {timeout: 10000})
+					.then(selector => { selector.setAttribute('style', 'display:block;'); selector.click(); }).catch(async e=> {
+							if (systemCheck.isDebug())
+								console.log('normal click isn\'t working');
+						});
+
+				await page.waitForSelector(`ul.monsters-list div[id="${teamToPlay.cards[i].toString()}"]`, {timeout: 3000}).then(element=>{
+					if(systemCheck.isDebug())
+						console.log('card selected');
+				}).catch(async e => {
+					if(systemCheck.isDebug())
+						console.error('no card, repeat click?!');
+					await page.waitForXPath(`//div[@card_detail_id="${teamToPlay.cards[i].toString()}"]`, {timeout: 5000})
+						.then(selector => {
+							if(systemCheck.isDebug())
+								console.log('found it');
+							selector.click();
+						}).catch(async e => {
 							console.error('[ERROR] can\'t find card at all!');
-						if(systemCheck.isDebug()) {
-							await page.screenshot({path: 'carderror-' + cardid + '-' + date.toDateString().replace(/\s+/g, '-') + '-pre.png'});
-							let htmloutput = await page.content();
-							fs.writeFile(`./selectcarderror` + teamToPlay.cards[i].toString() + `.html`, htmloutput, function (err) {
-								if (err) {
-									console.log(err);
-								}
-							});
-						}
-					})
+							if (systemCheck.isDebug()) {
+								await page.screenshot({path: 'carderror-' + teamToPlay.cards[i].toString() + '-' + date.toDateString().replace(/\s+/g, '-') + '-pre.png'});
+								let htmloutput = await page.content();
+								fs.writeFile(`./selectcarderror` + teamToPlay.cards[i].toString() + `.html`, htmloutput, function (err) {
+									if (err) {
+										console.log(err);
+									}
+								});
+							}
+						});
+				});
 			}else{
 				console.log('nocard ', i);
 			}

@@ -7,6 +7,9 @@ import systemCheck from '../api/systemCheck';
 import GetCards from "./getCards";
 import GetQuest from "./getQuest";
 import playerBot from "../api/playerBot";
+import fs from "fs";
+import JSONStream from "JSONStream";
+
 
 class app {
 	public draw: number = 0;
@@ -25,6 +28,7 @@ class app {
 	readonly sleepingTime: number = (parseInt(process.env.MINUTES_BATTLES_INTERVAL) || 30) * 60000;
 	private browsers: any = []; // ?Browser[]
 	public playerSettings: any = [];
+	public historyFallback = [];
 
 	// @ts-ignore
 	public isReady: Promise.IThenable<any>;
@@ -33,6 +37,7 @@ class app {
 		this.isReady = new Promise((resolve, reject) => {
 			try{
 				let checks = new systemCheck();
+				let counter = 0;
 
 				checks.checkForMissingConfigs();
 				if (systemCheck.isDebug()) {
@@ -44,12 +49,34 @@ class app {
 					console.log('Loaded', this.accounts.length, ' Accounts')
 					console.log('START ', this.accounts, new Date().toLocaleString())
 				}
-				resolve(undefined)
+				this.getHistory().on(
+					"data",
+					historyLine => {
+						if (systemCheck.isDebug()) {
+							counter++;
+							if (counter % 1000 === 0)
+								console.log(counter);
+						}
+						this.historyFallback.push(historyLine);
+					}).on(
+					"end",
+					(err) => {
+						console.log(this.historyFallback.length+' battles');
+						resolve(true);
+					}
+				);
+				//resolve(undefined)
 
 			}catch (err) {
 				reject(err)
 			}
 		})
+	}
+
+	getHistory() {
+		const transformStream = JSONStream.parse("*");
+		const stream = fs.createReadStream("./data/newHistory.json", { encoding: 'utf8' });
+		return stream.pipe(transformStream);
 	}
 
 	async loopAccounts() {
@@ -68,7 +95,7 @@ class app {
 				process.env['PASSWORD'] = this.passwords[i];
 				process.env['ACCUSERNAME'] = this.accountusers[i];
 
-				const bot = new playerBot(this.wins,this.losses, this.draw);
+				const bot = new playerBot(this.wins,this.losses, this.draw, this.historyFallback);
 
 				console.log('Opening browser');
 				if (this.keepBrowserOpen && this.browsers.length == 0)

@@ -1,17 +1,23 @@
 import fetch from "node-fetch";
 import {config} from "dotenv";
 import fs from "fs";
+import JSONStream from "JSONStream";
 config();
+let isWriting: boolean = false;
 
 class teamCreator {
-	historyFallback = require("../data/newHistory.json");
+	public historyFallback = [];//require("../data/newHistory.json");
 	readonly basicCards = require('../data/basicCards.js');
 	readonly summoners = [{260:'fire'},{257:'water'},{437:'water'},{224:'dragon'},{189:'earth'},{145:'death'},{240:'dragon'},{167:'fire'},{438:'death'},{156:'life'},{440:'fire'},{114:'dragon'},{441:'life'},{439:'earth'},{262:'dragon'},{261:'life'},{178:'water'},{258:'death'},{27:'earth'},{38:'life'},{49:'death'},{5:'fire'},{70:'fire'},{73:'life'},{259:'earth'},{74:'death'},{72:'earth'},{442:'dragon'},{71:'water'},{88:'dragon'},{78:'dragon'},{200:'dragon'},{16:'water'},{239:'life'},{254:'water'},{235:'death'},{113:'life'},{109:'death'},{110:'fire'},{291:'dragon'},{278:'earth'},{236:'fire'},{56:'dragon'},{112:'earth'},{111:'water'},{205:'dragon'},{130:'dragon'}]
 	readonly splinters = ['fire', 'life', 'earth', 'water', 'death', 'dragon']
 	private chosenTeam = null;
 	private getCards;
+	// @ts-ignore
+	public isReady: Promise.IThenable<any>;
 
-	constructor() {
+	constructor(history) {
+		let counter = 0;
+		this.historyFallback = history;
 	}
 
 	getSummoners(myCards) {
@@ -364,7 +370,20 @@ class teamCreator {
 				player_rating_final: lastBattle.player_1_rating_final,
 				winner: username==lastBattle.player_1?lastBattle.player_1:lastBattle.player_2,
 			});
-			fs.writeFile(__dirname.replace('api','data/newHistory.json'), JSON.stringify(this.historyFallback), err => {});
+			//fs.writeFile(__dirname.replace('api','data/newHistory.json'), JSON.stringify(this.historyFallback), err => {});
+			if(isWriting==false) {
+				isWriting = true;
+				console.log('updating history file');
+				const transformStream = JSONStream.stringify();
+				const outputStream = fs.createWriteStream('./data/newHistory.json');
+				transformStream.pipe(outputStream);
+				this.historyFallback.forEach(transformStream.write);
+				transformStream.end();
+				outputStream.on(
+					"finish",
+					() => isWriting = false
+				);
+			}
 		});
 	}
 
@@ -381,7 +400,19 @@ class teamCreator {
 				player_rating_final: lastBattle.player_2_rating_final,
 				winner: username!=lastBattle.player_1?lastBattle.player_1:lastBattle.player_2,
 			});
-			fs.writeFile(__dirname.replace('api','data/newHistory.json'), JSON.stringify(this.historyFallback), err => {});
+			if(isWriting==false) {
+				isWriting = true;
+				console.log('updating history file');
+				const transformStream = JSONStream.stringify();
+				const outputStream = fs.createWriteStream('./data/newHistory.json');
+				transformStream.pipe(outputStream);
+				this.historyFallback.forEach(transformStream.write);
+				transformStream.end();
+				outputStream.on(
+					"finish",
+					() => isWriting = false
+				);
+			}
 		});
 	}
 

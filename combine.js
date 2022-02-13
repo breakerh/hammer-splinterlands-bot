@@ -1,8 +1,10 @@
 const fs = require('fs');
+const JSONStream = require( "JSONStream" );
 
 const history = require("./data/newHistory.json");
 const history1 = require("./data/History.json");
 
+const transformStream = JSONStream.stringify();
 const multiDimensionalUnique = (arr) => {
     let uniques = [];
     let itemsFound = {};
@@ -14,9 +16,15 @@ const multiDimensionalUnique = (arr) => {
     }
     return uniques;
 };
-const newHistory = history.concat(history1);
-fs.writeFile(`./data/newHistory.json`, JSON.stringify(multiDimensionalUnique(newHistory)), function (err) {
-    if (err) {
-        console.log(err);
+const newHistory = multiDimensionalUnique(history.concat(multiDimensionalUnique(history1)));
+const outputStream = fs.createWriteStream('./data/newHistory.json');
+transformStream.pipe( outputStream );
+newHistory.forEach( transformStream.write );
+transformStream.end();
+
+outputStream.on(
+    "finish",
+    () => {
+        console.log("Done");
     }
-});
+);
