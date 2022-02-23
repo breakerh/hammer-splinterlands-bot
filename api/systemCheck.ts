@@ -6,7 +6,7 @@ config();
 class systemCheck {
 	// @ts-ignore
 	public versionChecked: Promise.IThenable<any>;
-	readonly version: number = 0.7;
+	readonly version: number = 0.9;
 
 	constructor() {
 

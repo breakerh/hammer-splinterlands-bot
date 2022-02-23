@@ -33,14 +33,17 @@ class playerBot {
 
 	private hook: any = false;
 
-	constructor(wins,losses,draw, history) {
+	private disableDiscord: boolean = false;
+
+	constructor(wins,losses,draw, history, disableDiscord = false) {
 		this.teamCreator = new teamCreator(history);
 		this.api = new connector();
 		this.wins = wins;
 		this.losses = losses;
 		this.draw = draw;
+		this.disableDiscord = disableDiscord;
 
-		if(process.env.DISCORD_BOT!==undefined && (process.env.DISCORD_BOT).length>1 && (process.env.DISCORD_BOT)!=="false") {
+		if(!this.disableDiscord && process.env.DISCORD_BOT!==undefined && (process.env.DISCORD_BOT).length>1 && (process.env.DISCORD_BOT)!=="false") {
 			this.hook = new Webhook(process.env.DISCORD_BOT);
 			this.hook.setUsername(process.env.ACCUSERNAME + ' bot');
 			this.hook.setAvatar(IMAGE_URL);
@@ -93,12 +96,12 @@ class playerBot {
 			timeout: 15000
 		}).then(res => res)
 			.catch(()=> console.log('Already logged in'))*/
-		let maintenance = await page.waitForSelector('.maintenance',{ timeout:2000 }).then(e => true).catch(err => false);
+		const maintenance = await page.waitForSelector('.maintenance',{ timeout:2000 }).then(e => true).catch(err => false);
 		if(maintenance) {
 			console.log(chalk.yellowBright('[MAINTENANCE MODE] ')+chalk.redBright('Splinterlands is in maintenance!'));
 			return false;
 		}
-		let username = await this.getElementText(page, '.dropdown-toggle .bio__name__display', 10000);
+		const username = await this.getElementText(page, '.dropdown-toggle .bio__name__display', 10000);
 
 		if (username == process.env.ACCUSERNAME) {
 			console.log('Already logged in!');
@@ -549,13 +552,28 @@ class playerBot {
 						})
 					}
 				});
-				await page.waitForSelector(`div[card_detail_id="${teamToPlay.cards[i].toString()}"]`, {timeout: 10000})
-					.then(selector => { selector.setAttribute('style', 'display:block;'); selector.click(); }).catch(async e=> {
-							if (systemCheck.isDebug())
-								console.log('normal click isn\'t working');
+				const cardid = teamToPlay.cards[i].toString();
+				const click = await page.evaluate(cardid => {
+					const element = document.querySelector(`div[card_detail_id="${cardid}"]`)
+					if(element){
+						element.scrollIntoView(false)
+						return true;
+					}
+					return false;
+				}, cardid)
+				if(click){
+					await page.waitForSelector(`div[card_detail_id="${cardid}"]`, {timeout: 10000})
+						.then(selector => selector.click())
+						.catch(async e=> {
+							if (systemCheck.isDebug()) {
+								console.log(e)
+								console.log('normal click isn\'t working')
+							}
 						});
+				}else if(systemCheck.isDebug())
+					console.log("can't click or not found")
 
-				await page.waitForSelector(`ul.monsters-list div[id="${teamToPlay.cards[i].toString()}"]`, {timeout: 3000}).then(element=>{
+				await page.waitForSelector(`ul.monsters-list div[id="${teamToPlay.cards[i].toString()}"]`, {timeout: 4000}).then(element=>{
 					if(systemCheck.isDebug())
 						console.log('card selected');
 				}).catch(async e => {
@@ -565,7 +583,11 @@ class playerBot {
 						.then(selector => {
 							if(systemCheck.isDebug())
 								console.log('found it');
-							selector.click();
+							try {
+								selector.click();
+							}catch (e) {
+								console.error("[ERROR] Found, but can't click!")
+							}
 						}).catch(async e => {
 							console.error('[ERROR] can\'t find card at all!');
 							if (systemCheck.isDebug()) {
