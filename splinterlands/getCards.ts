@@ -11,40 +11,45 @@ class GetCards {
 	readonly exclude = [158,162,180,183,184,185,194,367,371,373,374,395,398,401];
 	public starters = [];
 
-	constructor(starters) {
+	constructor(starters, cards) {
 		this.starters = starters;
-		this.cardsReady = new Promise((resolve, reject) => {
-			fetch("https://api2.splinterlands.com/cards/get_details",
-				{
-					"credentials":"omit",
-					"headers":{
-						"accept":"application/json, text/javascript, */*; q=0.01",
-						"accept-language":"en-GB,en-US;q=0.9,en;q=0.8"
-					},
-					"referrer":"https://splinterlands.io/?p=collection",
-					"referrerPolicy":"no-referrer-when-downgrade",
-					"body":null,
-					"method":"GET",
-					"mode":"cors"
-				})
-				.then(async response => {
-					const text = await response.text()
-					try {
-						return JSON.parse(text)
-					}catch (e) {
-						throw new Error("no valid response")
-					}
-				})
-				.then((jsonResponse) => {
-					this.cards = jsonResponse;
-					console.log(this.cards.length);
-					resolve(this.cards);
-				})
-				.catch((error) => {
-					console.error('There has been a problem with your fetch operation:', error);
-					reject();
-				});
-		});
+		if(cards===false) {
+			this.cardsReady = new Promise((resolve, reject) => {
+				fetch("https://api2.splinterlands.com/cards/get_details",
+					{
+						"credentials": "omit",
+						"headers": {
+							"accept": "application/json, text/javascript, */*; q=0.01",
+							"accept-language": "en-GB,en-US;q=0.9,en;q=0.8"
+						},
+						"referrer": "https://splinterlands.io/?p=collection",
+						"referrerPolicy": "no-referrer-when-downgrade",
+						"body": null,
+						"method": "GET",
+						"mode": "cors"
+					})
+					.then(async response => {
+						const text = await response.text()
+						try {
+							return JSON.parse(text)
+						} catch (e) {
+							throw new Error("no valid response")
+						}
+					})
+					.then((jsonResponse) => {
+						this.cards = jsonResponse;
+						console.log(this.cards.length);
+						resolve(this.cards);
+					})
+					.catch((error) => {
+						console.error('There has been a problem with your fetch operation:', error);
+						reject();
+					});
+			});
+		}else{
+			this.cards = cards;
+			this.cardsReady = new Promise((resolve, reject) => resolve(this.cards)); // to keep the promise
+		}
 	}
 
 	deck(id){

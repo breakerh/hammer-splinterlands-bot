@@ -29,6 +29,7 @@ class app {
     private browsers: any = []; // ?Browser[]
     public playerSettings: any = [];
     public historyFallback = [];
+    public cardDetails: any = false;
 
     // @ts-ignore
     public isReady: Promise.IThenable<any>;
@@ -75,7 +76,7 @@ class app {
 
     getHistory() {
         const transformStream = JSONStream.parse("*");
-        const stream = fs.createReadStream("./data/ai_model_smart.json", { encoding: "utf8" });
+        const stream = fs.createReadStream("./data/ai_model_smart4.json", { encoding: "utf8" });
         return stream.pipe(transformStream);
     }
 
@@ -98,16 +99,17 @@ class app {
                 const page = (await (this.keepBrowserOpen ? this.browsers[i] : this.browsers[0]).pages())[1];
 
                 const playerSettings = await this.getPlayerSettings();
-                const allCards = new GetCards(playerSettings.starter_editions.map(id => parseInt(id)));
+                const allCards = new GetCards(playerSettings.starter_editions.map(id => parseInt(id)),this.cardDetails);
                 const allQuests = new GetQuest();
                 if (systemCheck.isDebug())
                     console.log("getting user cards collection from splinterlands API...")
                 const myCards = await allCards.cardsReady
                     .then(() => allCards.getPlayerCards(process.env["ACCUSERNAME"]))
-                    .catch(() => console.log("cards collection api didnt respond. Did you use username? avoid email!"));
+                    .catch((error) => {console.error(error);console.log("cards collection api didnt respond. Did you use username? avoid email!")});
                 if (systemCheck.isDebug())
                     console.log("getting user quest info from splinterlands API...");
                 console.log(myCards.length);
+                this.cardDetails = allCards.cards;
                 bot.passCards(allCards);
                 const quest = await allQuests.getPlayerQuest(this.accountusers[i].split("@")[0]);
 

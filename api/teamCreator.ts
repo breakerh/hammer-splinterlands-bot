@@ -48,9 +48,9 @@ class teamCreator {
         const totB = b[9];
 
         let comparison = 0;
-        if (totA < totB) {
+        if (totA > totB) {
             comparison = 1;
-        } else if (totA > totB) {
+        } else if (totA < totB) {
             comparison = -1;
         }
         return comparison;
@@ -359,19 +359,19 @@ class teamCreator {
     }
 
     reportWin(username) {
-        this.getLastBattle(username).then(lastBattle => {
+        /*this.getLastBattle(username).then(lastBattle => {
             const details = JSON.parse(lastBattle.details);
             const monstersDetails = this.extractMonster(details.team1)
             const info = this.extractGeneralInfo(lastBattle)
             this.historyFallback.push({
                 ...monstersDetails,
-                ...info/*,
+                ...info/!*,
                 battle_queue_id: lastBattle.battle_queue_id_1,
                 player_rating_initial: lastBattle.player_1_rating_initial,
                 player_rating_final: lastBattle.player_1_rating_final,
-                winner: username==lastBattle.player_1?lastBattle.player_1:lastBattle.player_2,*/
+                winner: username==lastBattle.player_1?lastBattle.player_1:lastBattle.player_2,*!/
             });
-            if(!isWriting){
+            /!*if(!isWriting){
                 isWriting = true;
                 console.log(chalk.bgRed.white("DON'T CLOSE THE SCRIPT, WRITING MEMORY!"));
                 const writeStream = fs.createWriteStream("./data/ai_model_smart.json")
@@ -383,9 +383,9 @@ class teamCreator {
                         isWriting = false;
                     }
                 );
-            }
+            }*!/
             //fs.writeFile(__dirname.replace('api','data/newHistory.json'), JSON.stringify(this.historyFallback), err => {});
-            /*if(isWriting==false) {
+            /!*if(isWriting==false) {
 				const writingHistory = this.historyFallback;
 				isWriting = true;
 				console.log('updating history file');
@@ -398,24 +398,24 @@ class teamCreator {
 					"finish",
 					() => isWriting = false
 				);
-			}*/
-        });
+			}*!/
+        });*/
     }
 
     reportLoss(username) {
-        this.getLastBattle(username).then(lastBattle => {
+        /*this.getLastBattle(username).then(lastBattle => {
             const details = JSON.parse(lastBattle.details);
             const monstersDetails = this.extractMonster(details.team1)
             const info = this.extractGeneralInfo(lastBattle)
             this.historyFallback.push({
                 ...monstersDetails,
-                ...info/*,
+                ...info/!*,
                 battle_queue_id: lastBattle.battle_queue_id_2,
                 player_rating_initial: lastBattle.player_2_rating_initial,
                 player_rating_final: lastBattle.player_2_rating_final,
-                winner: username!=lastBattle.player_1?lastBattle.player_1:lastBattle.player_2,*/
+                winner: username!=lastBattle.player_1?lastBattle.player_1:lastBattle.player_2,*!/
             });
-            if(!isWriting){
+            /!*if(!isWriting){
                 isWriting = true;
                 console.log(chalk.bgRed.white("DON'T CLOSE THE SCRIPT, WRITING MEMORY!"));
                 const writeStream = fs.createWriteStream("./data/ai_model_smart.json")
@@ -427,8 +427,8 @@ class teamCreator {
                         isWriting = false;
                     }
                 );
-            }
-            /*if(isWriting==false) {
+            }*!/
+            /!*if(isWriting==false) {
 				const writingHistory = this.historyFallback;
 				isWriting = true;
 				console.log('updating history file');
@@ -441,8 +441,8 @@ class teamCreator {
 					"finish",
 					() => isWriting = false
 				);
-			}*/
-        });
+			}*!/
+        });*/
     }
 
     passCards(getCards) {
