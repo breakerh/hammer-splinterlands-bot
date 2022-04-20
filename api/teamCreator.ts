@@ -58,23 +58,23 @@ class teamCreator {
 
     private cardsIdsforSelectedBattles = (mana, ruleset, splinters, summoners) => this.battlesFilterByManacap(mana, ruleset, summoners)
         .then(x => x.map(
-            (x) => {
-                return [
-                    x.summoner_id ? parseInt(x.summoner_id) : "",
-                    x.monster_1_id ? parseInt(x.monster_1_id) : "",
-                    x.monster_2_id ? parseInt(x.monster_2_id) : "",
-                    x.monster_3_id ? parseInt(x.monster_3_id) : "",
-                    x.monster_4_id ? parseInt(x.monster_4_id) : "",
-                    x.monster_5_id ? parseInt(x.monster_5_id) : "",
-                    x.monster_6_id ? parseInt(x.monster_6_id) : "",
-                    this.summonerColor(x.summoner_id) ? this.summonerColor(x.summoner_id) : "",
-                    x.tot ? parseInt(x.tot) : "",
-                    x.ratio ? parseInt(x.ratio) : "",
-                ]
-            }
-        ).filter(
-            team => splinters.includes(team[7])
-        ).sort(this.compare)
+                (x) => {
+                    return [
+                        x.summoner_id ? parseInt(x.summoner_id) : "",
+                        x.monster_1_id ? parseInt(x.monster_1_id) : "",
+                        x.monster_2_id ? parseInt(x.monster_2_id) : "",
+                        x.monster_3_id ? parseInt(x.monster_3_id) : "",
+                        x.monster_4_id ? parseInt(x.monster_4_id) : "",
+                        x.monster_5_id ? parseInt(x.monster_5_id) : "",
+                        x.monster_6_id ? parseInt(x.monster_6_id) : "",
+                        this.summonerColor(x.summoner_id) ? this.summonerColor(x.summoner_id) : "",
+                        x.tot ? parseInt(x.tot) : "",
+                        x.ratio ? parseInt(x.ratio) : "",
+                    ]
+                }
+            ).filter(
+                team => splinters.includes(team[7])
+            ).sort(this.compare)
         )
 
     async askFormation(matchDetails) {
@@ -257,7 +257,7 @@ class teamCreator {
     }
 
     async teamSelection(possibleTeams, matchDetails, quest) {
-
+        possibleTeams = possibleTeams.sort(this.compare);
         console.log("quest custom option set as:", process.env.QUEST_PRIORITY, typeof process.env.QUEST_PRIORITY)
         const priorityToTheQuest = JSON.parse(process.env.QUEST_PRIORITY.toLowerCase());
         if(priorityToTheQuest && possibleTeams.length > 25 && quest && quest.total) {
@@ -275,8 +275,12 @@ class teamCreator {
                     return this.chosenTeam;
                 }
             }
+            /*if(left > 0 && filteredTeams.length > 0)
+                return { summoner: filteredTeams[0][0].toString(), cards: filteredTeams[0] };*/
         }
 
+        /*if(possibleTeams.length > 0 && possibleTeams[0][9] > 1 && possibleTeams[0][9]!==20)
+            return { summoner: possibleTeams[0][0].toString(), cards: possibleTeams[0] };*/
         //find best combination (most used)
         const res = await this.mostWinningSummonerTankCombo(possibleTeams, matchDetails);
         console.log("Dont play for the quest, and play this:", res)

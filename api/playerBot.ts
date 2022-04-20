@@ -363,7 +363,7 @@ class playerBot {
 	}
 
 	async checkMatchMana(page) {
-		const mana = await page.$$eval("div.col-md-12 > div.mana-cap__icon", el => el.map(x => x.getAttribute("data-original-title")));
+		const mana = await page.$$eval(".combat_info div.mana-cap__icon", el => el.map(x => x.getAttribute("data-original-title")));
 		const manaValue = parseInt(mana[0].split(':')[1], 10);
 		if (systemCheck.isDebug())
 			console.log(manaValue);
@@ -371,12 +371,12 @@ class playerBot {
 	}
 
 	async checkMatchRules(page) {
-		const rules = await page.$$eval("div.combat__rules > div.row > div>  img", el => el.map(x => x.getAttribute("data-original-title")));
+		const rules = await page.$$eval("div.combat__rules > div > div >  img", el => el.map(x => x.getAttribute("data-original-title")));
 		return rules.map(x => x.split(':')[0]).join('|')
 	}
 
 	async checkMatchActiveSplinters(page) {
-		const splinterUrls = await page.$$eval("div.col-sm-4 > img", el => el.map(x => x.getAttribute("src")));
+		const splinterUrls = await page.$$eval("div.combat__splinters > div.active_element_list > img", el => el.map(x => x.getAttribute("src")));
 		return splinterUrls.map(splinter => this.splinterIsActive(splinter)).filter(x => x);
 	}
 
@@ -608,12 +608,6 @@ class playerBot {
 		}
 
 		await page.waitForTimeout(2000);
-		/*htmloutput = await page.content();
-		fs.writeFile(`./goforit.html`, htmloutput, function (err) {
-			if (err) {
-				console.log(err);
-			}
-		});*/
 		try {
 			await page.click('.btn-green')[0]; //start fight
 		} catch {
