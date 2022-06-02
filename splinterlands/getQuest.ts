@@ -12,6 +12,17 @@ class GetQuest {
 		{name: "Stubborn Mercenaries", element: "neutral"},
 		{name: "Gloridax Revenge", element: "dragon"},
 		{name: "Stealth Mission", element: "sneak"},
+
+
+		{name: "defend", element: "life"},
+		{name: "pirate", element: "water"},
+		/*{name: "High Priority Targets", element: "snipe"},*/
+		{name: "lyanna", element: "earth"},
+		{name: "stir", element: "fire"},
+		{name: "rising", element: "death"},
+		/*{name: "Stubborn Mercenaries", element: "neutral"},*/
+		{name: "gloridax", element: "dragon"},
+		/*{name: "Stealth Mission", element: "sneak"},*/
 	]
 
 	getQuestSplinter = (questName) => {
