@@ -2,15 +2,9 @@ const fetch = require("node-fetch")
 const fs = require("fs")
 const moment = require("moment")
 
-//const _usersToGrab = require("./data/userDatabase_filter")
-const _usersToGrab = ["breakerh", "fastyx", "fastymus","odian","enervaughn","pippocollasso"];
+const _usersToGrab = require("./data/userSelection")
 const JSONStream = require("JSONStream");
 
-const getBattles = () => {
-    const transformStream = JSONStream.parse("*");
-    const stream = fs.createReadStream("./data/ai_model_debug3.json", {encoding: "utf8"});
-    return stream.pipe(transformStream);
-}
 const wait = delay => new Promise((resolve) => setTimeout(resolve, delay))
 const getBattleHistory = async (player = "", tries = 2) => {
     console.log("History for "+player);
@@ -50,22 +44,6 @@ const getBattleHistory = async (player = "", tries = 2) => {
         ).then(x => battlesList = [...battlesList, ...x])
         .catch(onError);
 }
-/*const expandUserList = async (users) => {
-    return users;
-    const topUsers = await fetch("https://api.steemmonsters.io/players/leaderboard")
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Network response was not ok");
-            }
-            return response.json();
-        })
-        .then((userlist) => userlist.map(user => user.player))
-        .catch((error) => {
-            console.error("There has been a problem with your fetch operation:", error)
-        })
-    const combine = users.concat(topUsers)
-    return await combine.filter((x, y) => combine.indexOf(x) === y);
-}*/
 const extractGeneralInfo = (x) => ({
     match_type: x?.match_type ?? "",
     mana_cap: x?.mana_cap ?? "",
@@ -127,13 +105,13 @@ const createModel = async () => {
     for(const user of _usersToGrab)
         await getBattleHistory(user)
 
-    console.log(battlesList.length+" battles");
+    //console.log(battlesList.length+" battles");
     let users = extraUsers.filter((value, index, array) => array.indexOf(value) === index)
     extraUsers = []
     for(const user of users)
         await getBattleHistory(user)
 
-    console.log(battlesList.length+" battles");
+    //console.log(battlesList.length+" battles");
     users = extraUsers.filter((value, index, array) => array.indexOf(value) === index)
     extraUsers = []
     for(const user of users)
@@ -215,26 +193,3 @@ const createModel = async () => {
     )
 };
 createModel()
-/*
-const users = new Promise((resolve, reject) => {
-    getBattles().on(
-        "data",
-        historyLine => {
-            counter++
-            if (counter % 10000 === 0)
-                console.log(counter)
-            battlesList.push(historyLine)
-        }).on(
-        "end",
-        (err) => {
-            if(err!==undefined)
-                reject();
-            console.log(battlesList.length+" battles");
-            resolve(true);
-        }
-    );
-})
-users.then(async ()=>{
-
-})
-*/

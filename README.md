@@ -48,8 +48,10 @@ https://github.com/breakerh/hammer-splinterlands-bot/issues)
 - Windows, not familiar terminal: Execute `install.bat` in bot folder
 
 ## Create battle history ( to learn the script how to win )
-- Run `node battleGetData.js`
-- And run `node combine.js`
+- Open `data/userSelection.js`
+- Add your username and a few others (or keep existing)
+- Run `node battleGetDataNew.js`
+- Get a lot of coffee, thee whatever.. This can take a short while.
 
 ## How to start the bot
 - On MacOS/Linux/Windows: open terminal in bot folder and execute command `npm start`
@@ -60,7 +62,7 @@ https://github.com/breakerh/hammer-splinterlands-bot/issues)
 ### With NPM
 - Run `git pull`
 
-### With normall download
+### With normal download
 - Download the zip again, and replace all files except: `.env` and everything in `/data/`
 
 ## Bot configuration:
@@ -115,11 +117,7 @@ PASSWORD=password1,password2,POST_KEY3
 
 **How to get history data from users of my choice?**
 
-1. Open battlesGetData.js in notepad and change the usersToGrab on line 88 to the users of your choice
-2. Run `node battlesGetData.js` in the bot folder
-3. File history.json is created, rename it to newHistory.json to replace the existing history data OR extend the newHistory.json file (see below)
-
-**How to extend the newHistory.json without deleting existing data?**
-
-1. Backup newHistory.json in case something goes wrong
-2. Run `node combine.js` to add the data from history.json to the newHistory.json file
+1. Open `data/userSelection.js`
+2. Add your username and a few others (or keep existing)
+3. Run `node battlesGetDataNew.js`
+4. File `ai_model_smart4.json` is created, you're ready to roll!
