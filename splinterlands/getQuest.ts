@@ -22,7 +22,15 @@ class GetQuest {
 		{name: "rising", element: "death"},
 		/*{name: "Stubborn Mercenaries", element: "neutral"},*/
 		{name: "gloridax", element: "dragon"},
-		/*{name: "Stealth Mission", element: "sneak"},*/
+
+		{name: "stealth", element: "sneak"},
+		/*{name: "armor", element: "life"},
+		{name: "healing", element: "life"},
+		{name: "flying", element: "dragon"},
+		{name: "anti-melee", element: "fire"},
+		{name: "anti-magic", element: "life"},
+		{name: "exploits", element: "neutral"},
+		{name: "disable", element: "neutral"},*/
 	]
 
 	getQuestSplinter = (questName) => {
@@ -31,7 +39,7 @@ class GetQuest {
 			console.log(playerQuest);
 			console.log(questName);
 		}
-		return playerQuest["element"];
+		return typeof playerQuest === "undefined"?null:playerQuest["element"];
 	}
 
 	getPlayerQuest = (username) => (
@@ -48,10 +56,20 @@ class GetQuest {
 				"mode": "cors" })
 			.then(x => x && x.json())
 			.then(x => {
-				if (x[0])
-					return {name: x[0].name, splinter: this.getQuestSplinter(x[0].name), total: x[0].total_items, completed: x[0].completed_items};
+				if (x[0]) {
+					const splinter = this.getQuestSplinter(x[0].name);
+					if(splinter === null)
+						return null;
+					else
+						return {
+							name: x[0].name,
+							splinter: splinter,
+							total: x[0].total_items,
+							completed: x[0].completed_items
+					};
+				}
 				})
-			.catch(e => console.log('[ERROR QUEST] Check if Splinterlands is down. Are you using username or email? please use username'))
+			.catch(e => console.log(e,'[ERROR QUEST] Check if Splinterlands is down. Are you using username or email? please use username'))
 	)
 }
 
