@@ -1,6 +1,6 @@
 {
   "name": "hammer-splinterlands-bot",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "description": "A fast and efficient multi-account splinderlands bot based on 'ultimate-splinterlands-bot'",
   "main": "index.tsx",
   "scripts": {

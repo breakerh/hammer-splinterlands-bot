@@ -66,6 +66,9 @@ class playerBot {
 	async createBrowsers(count: number, headless: boolean) {
 		for (let i = 0; i < count; i++) {
 			const browser = await puppeteer.launch({
+				args: [
+					'--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage','--disable-accelerated-2d-canvas','--no-first-run','--no-zygote','--disable-gpu'
+				],
 				headless: headless,
 			});
 			const page = await browser.newPage();
@@ -219,7 +222,7 @@ class playerBot {
 				return;
 			}
 		}
-		const erc = (await this.getElementTextByXpath(page, "//div[@class='dec-options'][1]/div[@class='value'][2]/div", 1000)).split('.')[0];
+		const erc = (await this.getElementTextByXpath(page, "//div[@class='dec-options'][1]/div[@class='value']/div", 1000)).split('.')[0];
 		console.log('Current Energy Capture Rate is ' + erc + "%");
 		if (parseInt(erc) < this.ercThreshold) {
 			console.log('ERC is below threshold of ' + this.ercThreshold + '% - skipping this account');
@@ -327,8 +330,8 @@ class playerBot {
 
 	async changeBattleType(page) {
 		try {
-			await page.waitForSelector("#battle_category_type", { timeout: 20000 })
-			let battleType = (await page.$eval('#battle_category_type', el => el.innerText)).trim();
+			await page.waitForSelector("#bh_modern_toggle", { timeout: 20000 }).then(btn=>btn.click())
+			/*let battleType = (await page.$eval('#battle_category_type', el => el.innerText)).trim();
 			while (battleType !== "RANKED") {
 				if (systemCheck.isDebug())
 					console.log("Wrong battleType! battleType is", battleType, "Trying to change it");
@@ -341,10 +344,11 @@ class playerBot {
 				}
 				await page.waitForTimeout(1000);
 				battleType = (await page.$eval('#battle_category_type', el => el.innerText)).trim();
-			}
+			}*/
+
 		} catch (error) {
 			if (systemCheck.isDebug())
-				console.log("Error: couldn't find battle category type", error);
+				console.log("Error: couldn't find #bh_modern_toggle", error);
 		}
 	}
 
