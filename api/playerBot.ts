@@ -30,6 +30,7 @@ class playerBot {
 	private teamCreator: teamCreator;
 	private api: connector;
 	private decWon: any;
+	private spsWon: any;
 
 	private hook: any = false;
 
@@ -93,7 +94,12 @@ class playerBot {
 
 		await page.goto('https://splinterlands.com/?p=battle_history');
 		await page.waitForTimeout(4000);
-
+		let htmloutput = await page.content();
+		fs.writeFile(`./test2.html`, htmloutput, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});
 		/*let item = await page.waitForSelector('#log_in_button > button', {
 			visible: true,
 			timeout: 15000
@@ -106,11 +112,19 @@ class playerBot {
 		}
 		const username = await this.getElementText(page, '.dropdown-toggle .bio__name__display', 10000);
 
+		let htmloutput2 = await page.content();
+		fs.writeFile(`./test3.html`, htmloutput2, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});
 		if (username == process.env.ACCUSERNAME) {
 			console.log('Already logged in!');
 		} else {
+			console.log(username)
 			console.log('Login')
-			await this.login(page).catch(e=>{
+			await this.login(page)
+				.catch(e=>{
 				console.log(e);
 				throw new Error('Login Error');
 			});
@@ -146,31 +160,97 @@ class playerBot {
 	}
 
 	async login(page) {
-		try {
-			page.waitForSelector('#log_in_button > button').then(() => page.click('#log_in_button > button'))
-			await page.waitForSelector('#email')
-				.then(() => page.waitForTimeout(3000))
-				.then(() => page.focus('#email'))
-				.then(() => page.type('#email', process.env.EMAIL))
-				.then(() => page.focus('#password'))
-				.then(() => page.type('#password', process.env.PASSWORD))
-				.then(() => page.keyboard.press('Enter'))
-				.then(() => page.waitForTimeout(8000))
-				.then(async () => {
-					await page.waitForSelector('#log_in_text', {
-						visible: true, timeout: 3000
+		let htmloutput2 = await page.content();
+		fs.writeFile(`./test4.html`, htmloutput2, function (err) {
+			if (err) {
+				console.log(err);
+			}
+		});
+		const tryLogin = async () => {
+			try {
+				await page.waitForSelector('#email')
+					.then(() => page.waitForTimeout(3000))
+					.then(() => page.focus('#email'))
+					.then(() => page.type('#email', process.env.EMAIL))
+					.then(() => page.focus('#password'))
+					.then(() => page.type('#password', process.env.PASSWORD))
+					.then(() => page.keyboard.press('Enter'))
+					.then(() => page.waitForTimeout(8000))
+					.then(async () => {
+						await page.waitForSelector('#log_in_text', {
+							visible: true, timeout: 3000
+						})
+							.then(() => {
+								console.log('logged in!')
+							})
+							.catch(() => {
+								console.log('didnt login');
+								throw new Error('Didnt login');
+							})
 					})
-						.then(()=>{
-							console.log('logged in!')
-						})
-						.catch(()=>{
-							console.log('didnt login');
-							throw new Error('Didnt login');
-						})
-				})
-				.then(() => page.waitForTimeout(500))
+					.then(() => page.waitForTimeout(500))
+			}catch (e) {
+				console.error('Check that you used correctly username and posting key or email and password.')
+				throw new Error(e);
+			}
+		}
+		try {
+			console.log(
+				'search it'
+			)
+			let t = await this.clickOnElement(page, '.new-button', 15000)
+			console.log(
+				t,'wait...'
+			)
+			let tt = await this.clickOnElement(page, '.form-horizontal[name="keychainLogin"] > .form-group > div > a.sm-input-option.pull-right[name="emailPwLoginBtn"]', 15000)
+			console.log(
+				tt,'uhm...'
+			)
+			await tryLogin();
+			/*page.waitForSelector('.new-button',{ timeout: 15000 })
+				.then(async () => {
+
+				console.log(
+					'click it'
+				)
+				page.click('.new-button')
+
+				console.log(
+					'wait...'
+				)
+				await page.waitForTimeout(3000);
+				console.log(
+					'we waited'
+				)
+				await page.waitForSelector('.form-horizontal[name="keychainLogin"] > .form-group > div > a.sm-input-option.pull-right[name="emailPwLoginBtn"]')
+					.then(async () => {
+						try {
+							page.click('.form-horizontal[name="keychainLogin"] > .form-group > div > a.sm-input-option.pull-right[name="emailPwLoginBtn"]')
+						} catch (e) {
+							console.error("can\t click on email/password login button")
+							throw new Error(e);
+						}
+						await tryLogin();
+					})
+			}).catch(async e => {
+				let htmloutput = await page.content();
+				fs.writeFile(`./test.html`, htmloutput, function (err) {
+					if (err) {
+						console.log(err);
+					}
+				});
+				console.error(e);
+				throw new Error(e);
+			})*/
 		} catch (e) {
-			throw new Error('Check that you used correctly username and posting key or email and password.');
+			let htmloutput = await page.content();
+			fs.writeFile(`./test.html`, htmloutput, function (err) {
+				if (err) {
+					console.log(err);
+				}
+			});
+			console.error('Check that you used correctly username and posting key or email and password.')
+			throw new Error(e);
 		}
 	}
 
@@ -517,7 +597,7 @@ class playerBot {
 		}else if(outcome===true){
 			embed.setTitle('Yeah - that\'s a win!')
 				.setAuthor('Splinterlands Bot', IMAGE_URL, 'https://splinterlands.com/')
-				.addField('Dec Won', this.decWon, false)
+				.addField(this.decWon!==false?'Dec Won':'SPS won', this.decWon!==false?this.decWon:this.spsWon, false)
 				.addField('Wins / Losses / Draw', this.wins.toString()+' / '+this.losses.toString()+' / '+this.draw.toString(), false)
 				.setColor('#57de39')
 				.setFooter('Want more information?, look in your npm log!')
@@ -630,9 +710,25 @@ class playerBot {
 			const winner = await this.getElementText(page, '.player.winner .bio__name__display', 15000);
 			if (winner.trim() == process.env.ACCUSERNAME.trim()) {
 				this.wins++;
-				const decWon = await this.getElementText(page, '.player.winner span.dec-reward span', 1000);
-				this.decWon = decWon;
-				console.log(chalk.green('You won! Reward: ' + decWon + ' DEC'));
+				this.decWon = false;
+				this.spsWon = false;
+				let newRating = false;
+				try{
+					newRating = await this.getElementText(page, '.player.winner .rating-total', 1000);
+				}catch (e){}
+				try {
+					const decWon = await this.getElementText(page, '.player.winner span.dec-reward span', 1000);
+					this.decWon = decWon;
+					console.log(chalk.green(`You won! Reward: ${decWon} DEC; ${newRating ? `New Rating: ${newRating}` : ''}`));
+				}catch (e) {
+					try{
+						const spsWon = await this.getElementText(page, '.player.winner span.sps-reward span', 1000);
+						this.spsWon = spsWon;
+						console.log(chalk.green(`You won! Reward: ${spsWon} SPS; ${newRating ? `New Rating: ${newRating}` : ''}`));
+					}catch (e) {
+						console.log(chalk.blueBright(`You won! ${newRating ? `New Rating: ${newRating};` : ''} But no reward yet.. sorry`))
+					}
+				}
 				this.teamCreator.reportWin(process.env.ACCUSERNAME.trim());
 				outcome = true;
 			}
