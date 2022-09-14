@@ -25,7 +25,7 @@ class playerBot {
 	private losses: number = 0;
 	private draw: number = 0;
 
-	private getCards;
+	public getCards;
 	private browsers: any = [];
 	private teamCreator: teamCreator;
 	private api: connector;
@@ -36,8 +36,8 @@ class playerBot {
 
 	private disableDiscord: boolean = false;
 
-	constructor(wins,losses,draw, history, disableDiscord = false) {
-		this.teamCreator = new teamCreator(history);
+	constructor(wins,losses,draw, history, disableDiscord = false, summoners=[], cardDetails=[]) {
+		this.teamCreator = new teamCreator(history,summoners,cardDetails);
 		this.api = new connector();
 		this.wins = wins;
 		this.losses = losses;
@@ -199,13 +199,7 @@ class playerBot {
 				'search it'
 			)
 			let t = await this.clickOnElement(page, '.new-button', 15000)
-			console.log(
-				t,'wait...'
-			)
 			let tt = await this.clickOnElement(page, '.form-horizontal[name="keychainLogin"] > .form-group > div > a.sm-input-option.pull-right[name="emailPwLoginBtn"]', 15000)
-			console.log(
-				tt,'uhm...'
-			)
 			await tryLogin();
 			/*page.waitForSelector('.new-button',{ timeout: 15000 })
 				.then(async () => {
@@ -469,12 +463,12 @@ class playerBot {
 		return splinter.indexOf('inactive') === -1 ? splinter : '';
 	}
 
-	async buildTeam(matchDetails, quest){
+	async buildTeam(matchDetails, quest, getCards){
 		let teamToPlay;
 
-		this.teamCreator.passCards(this.getCards);
+		this.teamCreator.getCards = this.getCards;
 
-		const possibleTeams = await this.teamCreator.possibleTeam(matchDetails).catch(e=>console.log('Error from possible team API call: ',e));
+		const possibleTeams = await this.teamCreator.possibleTeam(matchDetails,getCards).catch(e=>console.log('Error from possible team API call: ',e));
 
 		if (possibleTeams && possibleTeams.length) {
 			//console.log('Possible Teams based on your cards: ', possibleTeams.length, '\n', possibleTeams);
@@ -530,9 +524,21 @@ class playerBot {
 							await page.waitForTimeout(5000);
 							await page.waitForSelector('.btn--create-team', { timeout: 25000 })
 								.then(()=>console.log('start the match'))
-								.catch((e)=>{
+								.catch(async (e) => {
 									console.log('third attempt failed');
-									throw new Error(e);})
+									await page.goto('https://splinterlands.io/');
+									await page.waitForTimeout(3600000);
+									await page.waitForXPath("//button[contains(., 'BATTLE')]", {timeout: 20000})
+										.then(button => button.click())
+										.catch(e => console.error('[ERROR] waiting for Battle button second time'));
+									await page.waitForTimeout(5000);
+									await page.waitForSelector('.btn--create-team', {timeout: 25000})
+										.then(() => console.log('start the match'))
+										.catch((e) => {
+											console.log('third attempt failed');
+											throw new Error(e);
+										})
+								})
 						})
 				})
 		} catch(e) {
@@ -559,7 +565,7 @@ class playerBot {
 		console.log("mana: ",mana);
 		await page.waitForTimeout(2000);
 
-		const teamToPlay = await this.buildTeam(matchDetails,quest);
+		const teamToPlay = await this.buildTeam(matchDetails,quest,allCards);
 		/*let htmloutput = await page.content();
 		fs.writeFile(`./selectTeam.html`, htmloutput, function (err) {
 			if (err) {
@@ -747,8 +753,9 @@ class playerBot {
 		return outcome;
 	}
 
-	passCards(allCards: GetCards) {
-		this.getCards = GetCards;
+	passCards() {
+		this.teamCreator.getCards = this.getCards;
+		this.teamCreator.passCards();
 	}
 }
 

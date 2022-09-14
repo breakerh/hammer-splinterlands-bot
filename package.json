@@ -1,10 +1,10 @@
 {
   "name": "hammer-splinterlands-bot",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "A fast and efficient multi-account splinderlands bot based on 'ultimate-splinterlands-bot'",
   "main": "index.tsx",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "ts-node test.tsx",
     "start": "ts-node index.tsx"
   },
   "author": "Bram Hammer",

@@ -10,6 +10,7 @@ class GetCards {
 	readonly basicCards = require('../data/basicCards.js');
 	readonly exclude = [158,162,180,183,184,185,194,367,371,373,374,395,398,401];
 	public starters = [];
+	public playerCards = [];
 
 	constructor(starters, cards) {
 		this.starters = starters;
@@ -95,7 +96,14 @@ class GetCards {
 				"mode": "cors"
 			})
 			.then(x => x && x.json())
-			.then(x => x['cards'] ? x['cards'].filter(x=>x.delegated_to === null || x.delegated_to === username).map(card => card.card_detail_id) : '')
+			.then(x => {
+				if(x['cards']){
+					const cards = x['cards'].filter(x=>x.delegated_to === null || x.delegated_to === username);
+					this.playerCards = cards;
+					return cards.map(card => card.card_detail_id)
+				}
+				return '';
+			})
 			.then(advanced => this.basicCards.concat(advanced))
 			.catch(e => {console.log('Using only basic cards due to error when getting user collection from splinterlands: ',e); return this.basicCards})
 		/*
@@ -130,6 +138,42 @@ class GetCards {
 				'abilities': []
 			}))
 			.catch(e => {console.log('Could not find card, error returned: ',e); return false;})
+	}
+
+	checkReplacement(cardId) {
+		const testCards = [157, 158, 159, 160, 395, 398, 399, 161, 162, 163, 167, 400, 401, 402, 403, 440, 168, 169, 170, 171, 381, 382, 383, 384, 385, 172, 173, 174, 178, 386, 387, 388, 389, 179, 180, 181, 182, 368, 369, 183, 184, 185, 189, 372, 373, 374, 375, 439, 146, 147, 148, 149, 409, 410, 411, 412, 413, 150, 151, 152, 156, 414, 415, 416, 417, 441, 135, 136, 137, 138, 353, 354, 355, 357, 139, 140, 141, 145, 358, 359, 360, 438, 224, 190, 191, 192, 193, 423, 424, 426, 194, 195, 196, 427, 428, 429];
+		let level = 1;
+		if(testCards.includes(cardId) && !this.playerCards.map(pc => pc.card_detail_id).includes(cardId)) {
+			// try to find non standard card that matches the skills
+			const card = this.cards.find(c => c.id === cardId);
+			const rawStats = card.stats;
+			delete rawStats['abilities']
+			//@ts-ignore
+			const stats = Object.fromEntries(
+				Object.entries(rawStats).map(
+					([k, v], i) => [k, v[level - 1]]
+				)
+			);
+			const test = this.cards.filter(c => {
+				if (c.id === cardId || !this.playerCards.map(pc => pc.card_detail_id).includes(c.id) || card.type !== c.type || c.color !== card.color)
+					return false;
+				const level = this.playerCards.find(pc => pc.card_detail_id === c.id).level;
+				const _rawStats = c.stats;
+				delete _rawStats['abilities']
+				if (_rawStats['mana'][level - 1] !== stats['mana'])
+					return false;
+				return true;
+			});
+			if (test.length>0) {
+				if(test.length == 1)
+					return test[0].id;
+				const gold = test.filter(c=>c.gold)
+				if(gold.length == 1)
+					return gold[0].id;
+				return test[0].id;
+			}
+		}
+		return cardId
 	}
 
 	async getAllCardIds() {

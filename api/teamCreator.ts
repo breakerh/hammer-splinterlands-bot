@@ -8,15 +8,21 @@ let isWriting = false;
 
 class teamCreator {
     public historyFallback = [];//require("../data/newHistory.json");
-    readonly basicCards = require("../data/basicCards.js");
-    readonly summoners = [{260:"fire"},{257:"water"},{437:"water"},{224:"dragon"},{189:"earth"},{145:"death"},{240:"dragon"},{167:"fire"},{438:"death"},{156:"life"},{440:"fire"},{114:"dragon"},{441:"life"},{439:"earth"},{262:"dragon"},{261:"life"},{178:"water"},{258:"death"},{27:"earth"},{38:"life"},{49:"death"},{5:"fire"},{70:"fire"},{73:"life"},{259:"earth"},{74:"death"},{72:"earth"},{442:"dragon"},{71:"water"},{88:"dragon"},{78:"dragon"},{200:"dragon"},{16:"water"},{239:"life"},{254:"water"},{235:"death"},{113:"life"},{109:"death"},{110:"fire"},{291:"dragon"},{278:"earth"},{236:"fire"},{56:"dragon"},{112:"earth"},{111:"water"},{205:"dragon"},{130:"dragon"}]
+    private basicCards:number[] = require("../data/basicCards.js");
+    public cardDetails = [];
+    public summoners = [{260:"fire"},{257:"water"},{437:"water"},{224:"dragon"},{189:"earth"},{145:"death"},{240:"dragon"},{167:"fire"},{438:"death"},{156:"life"},{440:"fire"},{114:"dragon"},{441:"life"},{439:"earth"},{262:"dragon"},{261:"life"},{178:"water"},{258:"death"},{27:"earth"},{38:"life"},{49:"death"},{5:"fire"},{70:"fire"},{73:"life"},{259:"earth"},{74:"death"},{72:"earth"},{442:"dragon"},{71:"water"},{88:"dragon"},{78:"dragon"},{200:"dragon"},{16:"water"},{239:"life"},{254:"water"},{235:"death"},{113:"life"},{109:"death"},{110:"fire"},{291:"dragon"},{278:"earth"},{236:"fire"},{56:"dragon"},{112:"earth"},{111:"water"},{205:"dragon"},{130:"dragon"}]
     readonly splinters = ["fire", "life", "earth", "water", "death", "dragon"]
     private chosenTeam = null;
-    private getCards;
+    public getCards;
     // @ts-ignore
     public isReady: Promise.IThenable<any>;
 
-    constructor(history) {
+    constructor(history,summoners = [],cardDetails=[]) {
+        if(summoners.length>0)
+            this.summoners = summoners;
+        this.cardDetails = cardDetails;
+        console.log('card',this.basicCards)
+        console.log(this.basicCards.includes(157))
         const counter = 0;
         this.historyFallback = history;
     }
@@ -43,20 +49,7 @@ class teamCreator {
         return this.historyFallback.filter( battle => battle.mana_cap == mana && (ruleset ? battle.ruleset === ruleset : true) )
     }
 
-    compare(a, b) {
-        const totA = a[9];
-        const totB = b[9];
-
-        let comparison = 0;
-        if (totA > totB) {
-            comparison = 1;
-        } else if (totA < totB) {
-            comparison = -1;
-        }
-        return comparison;
-    }
-
-    private cardsIdsforSelectedBattles = (mana, ruleset, splinters, summoners) => this.battlesFilterByManacap(mana, ruleset, summoners)
+    private cardsIdsforSelectedBattles = (mana, ruleset, splinters, summoners, getCards) => this.battlesFilterByManacap(mana, ruleset, summoners)
         .then(x => x.map(
                 (x) => {
                     return [
@@ -74,24 +67,112 @@ class teamCreator {
                 }
             ).filter(
                 team => splinters.includes(team[7])
-            ).sort(this.compare)
+            ).sort((a, b) => {
+                const testCards = [157, 158, 159, 160, 395, 398, 399, 161, 162, 163, 167, 400, 401, 402, 403, 440, 168, 169, 170, 171, 381, 382, 383, 384, 385, 172, 173, 174, 178, 386, 387, 388, 389, 179, 180, 181, 182, 368, 369, 183, 184, 185, 189, 372, 373, 374, 375, 439, 146, 147, 148, 149, 409, 410, 411, 412, 413, 150, 151, 152, 156, 414, 415, 416, 417, 441, 135, 136, 137, 138, 353, 354, 355, 357, 139, 140, 141, 145, 358, 359, 360, 438, 224, 190, 191, 192, 193, 423, 424, 426, 194, 195, 196, 427, 428, 429];
+                //console.log(testCards)
+
+                //console.log('testkaart',a[1])
+                const t = getCards.checkReplacement(a[1]);
+                //console.log('nieuwe?',t)
+                let amonsters = [t];
+                if(a[2]!=='') {
+                    //console.log('testkaart',a[2])
+                    const t2 = getCards.checkReplacement(a[2]);
+                    //console.log('nieuwe?',t2)
+                    amonsters.push(t2);
+                }
+                if(a[3]!=='') {
+                    //console.log('testkaart',a[3])
+                    const t3 = getCards.checkReplacement(a[3]);
+                    //console.log('nieuwe?',t3)
+                    amonsters.push(t3);
+                }
+                if(a[4]!=='') {
+                    //console.log('testkaart',a[4])
+                    const t4 = getCards.checkReplacement(a[4]);
+                    //console.log('nieuwe?',t4)
+                    amonsters.push(t4);
+                }
+                if(a[5]!=='') {
+                   // console.log('testkaart',a[5])
+                    const t5 = getCards.checkReplacement(a[5]);
+                   // console.log('nieuwe?',t5)
+                    amonsters.push(t5);
+                }
+                if(a[6]!=='') {
+                   // console.log('testkaart',a[6])
+                    const t6 = getCards.checkReplacement(a[6]);
+                   // console.log('nieuwe?',t6)
+                    amonsters.push(t6);
+                }
+                const maxA = amonsters.length;
+                const percentageA = (amonsters.filter(mid=>!(testCards.includes(mid))).length) / maxA * 100
+
+            //console.log('testkaart',a[1])
+            const tb = getCards.checkReplacement(a[1]);
+            //console.log('nieuwe?',t)
+            let bmonsters = [tb];
+            if(b[2]!=='') {
+                //console.log('testkaart',b[2])
+                const tb2 = getCards.checkReplacement(b[2]);
+                //console.log('nieuwe?',t2)
+                bmonsters.push(tb2);
+            }
+            if(b[3]!=='') {
+                //console.log('testkaart',b[3])
+                const tb3 = getCards.checkReplacement(b[3]);
+                //console.log('nieuwe?',t3)
+                bmonsters.push(tb3);
+            }
+            if(b[4]!=='') {
+                //console.log('testkaart',b[4])
+                const tb4 = getCards.checkReplacement(b[4]);
+                //console.log('nieuwe?',t4)
+                bmonsters.push(tb4);
+            }
+            if(b[5]!=='') {
+                // console.log('testkaart',b[5])
+                const tb5 = getCards.checkReplacement(b[5]);
+                // console.log('nieuwe?',t5)
+                bmonsters.push(tb5);
+            }
+            if(b[6]!=='') {
+                // console.log('testkaart',a[6])
+                const tb6 = getCards.checkReplacement(b[6]);
+                // console.log('nieuwe?',t6)
+                bmonsters.push(tb6);
+            }
+                const maxB = bmonsters.length;
+                const percentageB = (bmonsters.filter(mid=>!(testCards.includes(mid))).length) / maxB * 100
+                const totA = a[9];
+                const totB = b[9];
+                if(percentageA > percentageB && totA > 10)
+                    return -1
+                if(percentageA > percentageB && totA < totB && totA > 10)
+                    return -1
+                /*if(percentageA > percentageB && totA<20 && totB>=20)
+                    return 1*/
+                if((percentageA < 10 && percentageA<percentageB)||totA<totB)
+                    return 1
+                return 0
+            })
         )
 
-    async askFormation(matchDetails) {
+    async askFormation(matchDetails, getCards) {
         const cards = matchDetails.myCards || this.basicCards;
         const mySummoners = this.getSummoners(cards);
         console.log("INPUT: ", matchDetails.mana, matchDetails.rules, matchDetails.splinters, cards.length);
-        return await this.cardsIdsforSelectedBattles(matchDetails.mana, matchDetails.rules, matchDetails.splinters, mySummoners)
+        return await this.cardsIdsforSelectedBattles(matchDetails.mana, matchDetails.rules, matchDetails.splinters, mySummoners, getCards)
             .then(x => x.filter(
                 x => this.availabilityCheck(cards, x))
                 .map(element => element))
     }
 
-    async possibleTeam(matchDetails) {
+    async possibleTeam(matchDetails, getCards) {
         let possibleTeams = [];
         while (matchDetails.mana > 10) {
             console.log("check battles based on mana: "+matchDetails.mana)
-            possibleTeams = await this.askFormation(matchDetails)
+            possibleTeams = await this.askFormation(matchDetails, getCards)
             if (possibleTeams.length > 0) {
                 return possibleTeams;
             }
@@ -257,7 +338,7 @@ class teamCreator {
     }
 
     async teamSelection(possibleTeams, matchDetails, quest) {
-        possibleTeams = possibleTeams.sort(this.compare);
+        //possibleTeams = possibleTeams.sort(this.compare);
         console.log("quest custom option set as:", process.env.QUEST_PRIORITY, typeof process.env.QUEST_PRIORITY)
         const priorityToTheQuest = JSON.parse(process.env.QUEST_PRIORITY.toLowerCase());
         if(priorityToTheQuest && possibleTeams.length > 25 && quest && quest.total) {
@@ -449,8 +530,8 @@ class teamCreator {
         });*/
     }
 
-    passCards(getCards) {
-        this.getCards = getCards;
+    passCards() {
+
     }
 }
 

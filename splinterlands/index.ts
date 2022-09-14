@@ -30,7 +30,8 @@ class app {
     public playerSettings: any = [];
     public historyFallback = [];
     public cardDetails: any = false;
-
+    public summoners = [{260:"fire"},{257:"water"},{437:"water"},{224:"dragon"},{189:"earth"},{145:"death"},{240:"dragon"},{167:"fire"},{438:"death"},{156:"life"},{440:"fire"},{114:"dragon"},{441:"life"},{439:"earth"},{262:"dragon"},{261:"life"},{178:"water"},{258:"death"},{27:"earth"},{38:"life"},{49:"death"},{5:"fire"},{70:"fire"},{73:"life"},{259:"earth"},{74:"death"},{72:"earth"},{442:"dragon"},{71:"water"},{88:"dragon"},{78:"dragon"},{200:"dragon"},{16:"water"},{239:"life"},{254:"water"},{235:"death"},{113:"life"},{109:"death"},{110:"fire"},{291:"dragon"},{278:"earth"},{236:"fire"},{56:"dragon"},{112:"earth"},{111:"water"},{205:"dragon"},{130:"dragon"}]
+    public _cardDetails = [];
     // @ts-ignore
     public isReady: Promise.IThenable<any>;
 
@@ -50,12 +51,25 @@ class app {
                     console.log("Loaded", this.accounts.length, " Accounts")
                     console.log("START ", this.accounts, new Date().toLocaleString())
                 }
+                fetch("https://api.splinterlands.io/cards/get_details").then(response=>response.json()).then(response=>{
+                    this._cardDetails = response;
+                    this.summoners = response.filter(monster=>monster.type=="Summoner").map(summoner=>({
+                        [summoner.id]:this.parseSummonerColor(summoner.color)
+                    }))
+                    if (systemCheck.isDebug())
+                        console.log("summoners loaded!")
+                }).catch(error=>{
+                    if (systemCheck.isDebug()) {
+                        console.error("Oh no, there has been a problem with your fetch operation:", error);
+                        console.log("reverting to fallback");
+                    }
+                });
                 this.getHistory().on(
                     "data",
                     historyLine => {
                         if (systemCheck.isDebug()) {
                             counter++;
-                            if (counter % 1000 === 0)
+                            if (counter % 100000 === 0)
                                 console.log(counter);
                         }
                         this.historyFallback.push(historyLine);
@@ -80,6 +94,25 @@ class app {
         return stream.pipe(transformStream);
     }
 
+    parseSummonerColor(type:string) {
+        switch (type) {
+            case "Red":
+                return "fire";
+            case "Blue":
+                return "water";
+            case "Green":
+                return "earth";
+            case "Gold":
+                return "dragon";
+            case "Black":
+                return "death";
+            case "White":
+                return "life";
+            default:
+                return "";
+        }
+    }
+
     async loopAccounts() {
 
         while (true) {
@@ -88,7 +121,7 @@ class app {
                 process.env["PASSWORD"] = this.passwords[i];
                 process.env["ACCUSERNAME"] = this.accountusers[i];
 
-                const bot = new playerBot(this.wins,this.losses, this.draw, this.historyFallback);
+                const bot = new playerBot(this.wins,this.losses, this.draw, this.historyFallback, false, this.summoners, this._cardDetails);
 
                 console.log("Opening browser");
                 if (this.keepBrowserOpen && this.browsers.length == 0)
@@ -113,7 +146,8 @@ class app {
                     console.log("getting user quest info from splinterlands API...");
                 console.log(myCards.length);
                 this.cardDetails = allCards.cards;
-                bot.passCards(allCards);
+                bot.getCards = allCards;
+                bot.passCards()
                 const quest = await allQuests.getPlayerQuest(this.accountusers[i].split("@")[0]);
 
                 if (!quest)
